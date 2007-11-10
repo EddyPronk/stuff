@@ -16,12 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import string
-import cue
+import cuesheet
 import os
 
 file = open('montreux.cue')
 input = file.read()
-tokens = cue.parse('sheet', input)
+tokens = cuesheet.parse('sheet', input)
 
 state = 'header'
 
@@ -75,10 +75,11 @@ for track in album.tracks.values():
     opt.option('--tn', track.number) # track
 
     dir = '/media/data/transcoded'
-    os.mkdir(dir)
+
+    if not os.path.exists(dir):
+        os.mkdir(userDir)
+
     filename = os.path.join(dir, '%02d. %s.mp3' % (track.number, track.title))
     cmd = 'flac --decode --silent --stdout "%s" | lame - "%s" --preset standard ' % (track.file, filename) + ' '.join(opt.str)
     print cmd
-    if not os.path.exists(filename):
-        pass
-        #os.system(cmd)
+    os.system(cmd)
