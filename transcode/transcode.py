@@ -65,6 +65,13 @@ class options:
     def option(self, key, value):
         self.str.append('%s "%s"' % (key, value))
 
+output_root_dir = '/media/data/transcoded'
+album_dir = '%s - %s' % (album.performer, album.title)
+dir = os.path.join(output_root_dir, album_dir)
+
+if not os.path.exists(dir):
+    os.mkdir(dir)
+
 for track in album.tracks.values():
     opt = options()
     opt.option('--tt', track.title) # title
@@ -73,11 +80,6 @@ for track in album.tracks.values():
     opt.option('--ty', track.year) # year
     opt.option('--tc', track.comment) # comment
     opt.option('--tn', track.number) # track
-
-    dir = '/media/data/transcoded'
-
-    if not os.path.exists(dir):
-        os.mkdir(userDir)
 
     filename = os.path.join(dir, '%02d. %s.mp3' % (track.number, track.title))
     cmd = 'flac --decode --silent --stdout "%s" | lame - "%s" --preset standard ' % (track.file, filename) + ' '.join(opt.str)

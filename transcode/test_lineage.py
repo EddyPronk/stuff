@@ -7,10 +7,12 @@ class Lineage:
     def __init__(self):
         self.r = []
         self.album = album.Album()
+        
         self.checksums = []
         self.add(('^([0-9]+).\s+(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
         self.add(('([^:]+):([0-9a-f]+)', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]+) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
+        self.add(('^DISC ([0-9])',  lambda r : self.insertAlbum(r.group(1))))
 
     def extract(self):
         album = Album()
@@ -19,11 +21,15 @@ class Lineage:
             parse(line)
         album.do_print()
 
+    def insertAlbum(self, disk_number):
+        pass
+        print 'insertAlbum called with %s' % (disk_number)
+
     def insertTitle(self,number, title):
-        print 'insertTitle called with %s %s' % (number, title)
+        pass
+        #print 'insertTitle called with %s %s' % (number, title)
 
     def insertChecksum(self,filename, checksum):
-        print 'insertChecksum filename=%s checksum=%s' % (filename, checksum)
         self.checksums.append((filename, checksum))
 
     def find_track_number(self):
@@ -37,11 +43,11 @@ class Lineage:
                     break
             i += 1
         for s in self.checksums:
-            track_number = re.search('([0-9]+)', s[0][res:]).group(1)
-            track = self.album.track(track_number)
+            track_number = string.atoi(re.search('([0-9]+)', s[0][res:]).group(1))
+            track = self.album.disk.track(track_number)
             track.filename = s[0]
             track.checksum = s[1]
-            print "%s %s %s" % (re.search('([0-9]+)', s[0][res:]).group(1), s[0], s[1])
+            track = self.album.disk.track(track_number)
 
     def add(self, entry):
         self.r.append(entry)
@@ -88,11 +94,9 @@ class Lineage:
         if res is not None:
             filename = res.group(2)
             checksum = res.group(1)
-            print res.group(2)
             res = re.search(r'.*_t([0-9]+).flac', filename)
             if res is not None:
                 track_number = string.atoi(res.group(1))
-                print track_number
                 track = album.track(track_number)
                 track.filename = filename
                 track.checksum = checksum
@@ -110,18 +114,30 @@ class TestLineage(unittest.TestCase):
         #self.assertEqual(title, 'God Is A DJ')
 
     def testChecksum1(self):
-        line = 'Track01.flac:9da70b0b61fc39669b9de113a5aaacbe'
-        self.lineage.try_match(line)
+        self.lineage.try_match('Track01.flac:1234567890abcdef0123456789012345')
+        self.lineage.try_match('Track02.flac:1234567890abcdef0123456789012345')
+        self.lineage.find_track_number()
+        self.assertEqual(self.lineage.album.disk.track(1).filename, 'Track01.flac')
+        self.assertEqual(self.lineage.album.disk.track(1).checksum, '1234567890abcdef0123456789012345')
 
     def testChecksum2(self):
-        line = '6dedb8e3a86bb97a137df8e21b31868f *Prince2007-07-16_t01.flac'
-        self.lineage.try_match(line)
+        self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t07.flac')
+        self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t08.flac')
+        track = self.lineage.album.disk.track(8)
+        self.lineage.find_track_number()
+        self.assertEqual(self.lineage.album.disk.track(8).filename, 'Faithless2005-08-19_t08.flac')
+        self.assertEqual(self.lineage.album.disk.track(8).checksum, '1234567890abcdef0123456789012345')
 
     def testDetectNumber(self):
-        self.lineage.try_match('6dedb8e3a86bb97a137df8e21b31868f *Prince2007-07-16_t01.flac')
-        self.lineage.try_match('6dedb8e3a86bb97a137df8e21b31868f *Prince2007-07-16_t02.flac')
-        self.lineage.try_match('6dedb8e3a86bb97a137df8e21b31868f *Prince2007-07-16_t10.flac')
+        self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t01.flac')
+        self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t02.flac')
+        self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t07.flac')
         self.lineage.find_track_number()
+        track = self.lineage.album.disk.track(7)
+
+    def testMultiDisk(self):
+        self.lineage.try_match('DISC 1')
+        self.lineage.try_match('DISC 2')
         
 if __name__ == '__main__':
     unittest.main()

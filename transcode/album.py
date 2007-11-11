@@ -5,7 +5,7 @@ class Track:
     def __getattr__(self, name):
         return getattr(self.album, name)
 
-class Album:
+class Disk:
     def __init__(self):
         self.tracks = {}
 
@@ -15,3 +15,7 @@ class Album:
         else:
             self.tracks[track_number] = Track(track_number)
             return self.tracks[track_number]
+
+class Album:
+    def __init__(self):
+        self.disk = Disk()
