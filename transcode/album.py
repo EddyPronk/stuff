@@ -1,13 +1,18 @@
 class Track:
-    def __init__(self, track_number):
+    def __init__(self, track_number, album = None):
         self.number = track_number
+        self.album = album
 
     def __getattr__(self, name):
-        return getattr(self.album, name)
+        if self.album is None:
+            return '_%s_' % name
+        else:
+            return getattr(self.album, name)
 
 class Disk:
     def __init__(self, disk_number):
         self.tracks = {}
+        self.checksums = []
         self.number = disk_number
 
     def track(self, track_number):
