@@ -85,19 +85,21 @@ class Lineage:
     def process(self):
         for disk in self.album.disks.values():
             checksums = disk.checksums
+            i = 0
             if len(checksums) > 1:
-                i = 0
                 res = 0
                 while res == 0:
                     c = checksums[0][0][i]
                     for s in checksums:
                         if c != s[0][i]:
                             res = i
+                            print 'res = %d' % res
                             break
                     i += 1
             else:
                 res = 0
 
+            print i
             print '[processing DISK %d]' % (disk.number)
 
             for s in checksums:

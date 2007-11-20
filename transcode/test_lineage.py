@@ -54,6 +54,7 @@ class TestLineage(unittest.TestCase):
         
     def testRe(self):
         self.lineage.try_match_test('Track01.flac:1234567890abcdef0123456789012345')
+        self.lineage.try_match_test('Track10.flac:1234567890abcdef0123456789012345')
         self.assertEqual(self.lineage.try_match_test('DISC 2'), ('DISC' , '2'))
 
     def testChecksum1(self):
@@ -73,6 +74,18 @@ class TestLineage(unittest.TestCase):
         self.lineage.readlines()
         self.assertEqual(self.lineage.album.disk(1).track(8).filename, 'Faithless2005-08-19_t08.flac')
         self.assertEqual(self.lineage.album.disk(1).track(8).checksum, '1234567890abcdef0123456789012345')
+
+    def testChecksum3(self):
+        print 'testChecksum2'
+        input = '''
+1234567890abcdef0123456789012345 *01. Reverence.ape
+1234567890abcdef0123456789012345 *02. She's My Baby.ape
+1234567890abcdef0123456789012345 *10. Take The Long Way Home.ape
+        '''
+        self.lineage.input_file = FileFaker(input)
+        self.lineage.readlines()
+        self.assertEqual(self.lineage.album.disk(1).track(10).filename, '10. Take The Long Way Home.ape')
+        #self.assertEqual(self.lineage.album.disk(1).track(10).checksum, '1234567890abcdef0123456789012345')
 
     def testDetectNumber(self):
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t01.flac')
