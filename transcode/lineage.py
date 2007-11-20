@@ -3,6 +3,18 @@ import string
 import os
 import album
 
+def all_same(l):
+    first_item = iter(l).next()
+    for cur_item in l:
+        if cur_item != first_item:
+            return False
+    return True
+
+def find_diffs(data):
+    for item_num, items in enumerate(zip(*data)):
+        if not all_same(items):
+            return item_num
+
 class Lineage:
     def __init__(self):
         self.r = []
@@ -85,30 +97,19 @@ class Lineage:
     def process(self):
         for disk in self.album.disks.values():
             checksums = disk.checksums
-            i = 0
-            if len(checksums) > 1:
-                res = 0
-                while res == 0:
-                    c = checksums[0][0][i]
-                    for s in checksums:
-                        if c != s[0][i]:
-                            res = i
-                            print 'res = %d' % res
-                            break
-                    i += 1
-            else:
-                res = 0
+            filenames = []
+            for c in checksums:
+                filenames.append(c[0])
+        
+            res = find_diffs(filenames)
 
-            print i
             print '[processing DISK %d]' % (disk.number)
 
             for s in checksums:
                 track_number = string.atoi(re.search('([0-9]+)', s[0][res:]).group(1))
-                filename = s[0]
                 track = disk.track(track_number)
-                track.filename = filename
+                track.filename = s[0]
                 track.checksum = s[1]
-                #track = self.album.disk(1).track(track_number)
                 print '[processed %s %s]' % (track_number, track.filename)
 
     def add(self, entry):

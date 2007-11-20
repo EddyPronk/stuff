@@ -15,6 +15,41 @@ class FileFaker:
     def write(self, string):
         print string
 
+if __name__ == '__main__':
+    import unittest
+    class H(unittest.TestCase):
+        def test_all_same_string_false(self):
+            self.assertEqual(False, lineage.all_same(iter('aazaa')))
+
+        def test_all_same_string_true(self):
+            self.assertEqual(True, lineage.all_same(iter('aaaaa')))
+
+        def test_all_same_list_False(self):
+            self.assertEqual(False, lineage.all_same(['A','v','A','A']))
+
+
+        def test_all_same_list_True(self):
+            self.assertEqual(True, lineage.all_same(['A','A','A','A']))
+        
+        def test_all_same_raw_string_true(self):
+            self.assertEqual(True, lineage.all_same('aaaaa'))
+
+
+    class I(unittest.TestCase):
+        def test_track(self):
+            self.assertEqual([5,6], lineage.find_diffs( ['track%.2d.whatever' % n  for n in range(12) ]))
+
+        def test_track(self):
+            self.assertEqual([5,6], lineage.find_diffs( ['track%.2d.whatever' % n  for n in range(12) ]))
+
+        def test_track(self):
+            tracks = ["Track01.ape", "Track02.ape", "Track03.ape"]
+            self.assertEqual(6, lineage.find_diffs(tracks))
+
+        def test_track2(self):
+            tracks = ["01. Reverence.ape", "02. She's My Baby.ape", "10. Take The Long Way Home.ape"]
+            self.assertEqual(0, lineage.find_diffs(tracks))
+
 class TestLineage(unittest.TestCase):
 
     def setUp(self):
@@ -85,14 +120,13 @@ class TestLineage(unittest.TestCase):
         self.lineage.input_file = FileFaker(input)
         self.lineage.readlines()
         self.assertEqual(self.lineage.album.disk(1).track(10).filename, '10. Take The Long Way Home.ape')
-        #self.assertEqual(self.lineage.album.disk(1).track(10).checksum, '1234567890abcdef0123456789012345')
 
     def testDetectNumber(self):
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t01.flac')
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t02.flac')
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t07.flac')
         self.lineage.process()
-        track = self.lineage.album.disk(1).track(7)
+        self.assertEqual(self.lineage.album.disk(1).track(7).filename, 'Faithless2005-08-19_t07.flac')
 
     def testMultiDisk(self):
         
