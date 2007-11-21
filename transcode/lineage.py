@@ -21,7 +21,7 @@ class Lineage:
         self.album = album.Album()
         self.disk = self.album.disk(1)
 
-        self.checksums = []
+        self.checksums = {}
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
         self.add(('([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
@@ -60,7 +60,7 @@ class Lineage:
         track.title = title
         track.title = track.title.replace(' / ', ', ')
 
-    def insertChecksum(self,filename, checksum):
+    def insertChecksum(self, filename, checksum):
         print '[checksum file=%s checksum=%s]' % (filename, checksum)
         expr = '\.(flac|ape)$'
         res = re.search(expr, filename)
@@ -68,7 +68,7 @@ class Lineage:
             dir, filename = os.path.split(filename)
             print dir
             self.try_match(dir)
-            self.disk.checksums.append((filename, checksum))
+            self.disk.checksums[filename] = checksum
         else:
             print '[ignoring %s]' % filename
 
@@ -96,20 +96,12 @@ class Lineage:
 
     def process(self):
         for disk in self.album.disks.values():
-            checksums = disk.checksums
-            filenames = []
-            for c in checksums:
-                filenames.append(c[0])
-        
-            res = find_diffs(filenames)
-
-            print '[processing DISK %d]' % (disk.number)
-
-            for s in checksums:
-                track_number = string.atoi(re.search('([0-9]+)', s[0][res:]).group(1))
+            res = find_diffs(disk.checksums.keys())
+            for filename, checksum in disk.checksums.iteritems():
+                track_number = string.atoi(re.search('([0-9]+)', filename[res:]).group(1))
                 track = disk.track(track_number)
-                track.filename = s[0]
-                track.checksum = s[1]
+                track.filename = filename
+                track.checksum = checksum
                 print '[processed %s %s]' % (track_number, track.filename)
 
     def add(self, entry):

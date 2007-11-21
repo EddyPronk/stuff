@@ -12,7 +12,7 @@ class Track:
 class Disk:
     def __init__(self, disk_number):
         self.tracks = {}
-        self.checksums = []
+        self.checksums = {}
         self.number = disk_number
 
     def track(self, track_number):
