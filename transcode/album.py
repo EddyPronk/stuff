@@ -5,7 +5,7 @@ class Track:
 
     def __getattr__(self, name):
         if self.album is None:
-            return '_%s_' % name
+            return ''
         else:
             return getattr(self.album, name)
 

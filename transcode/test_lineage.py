@@ -90,7 +90,10 @@ class TestLineage(unittest.TestCase):
     def testRe(self):
         self.lineage.try_match_test('Track01.flac:1234567890abcdef0123456789012345')
         self.lineage.try_match_test('Track10.flac:1234567890abcdef0123456789012345')
+        print 'here'
         self.assertEqual(self.lineage.try_match_test('DISC 2'), ('DISC' , '2'))
+        print 'here'
+        self.assertEqual(self.lineage.try_match_test('Disc 2'), ('Disc' , '2'))
         #self.assertEqual(self.lineage.try_match_test('d3t01.flac'), ('3' , '01'))
 
     def testChecksum1(self):

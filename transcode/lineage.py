@@ -25,7 +25,7 @@ class Lineage:
         #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.insertAlbum(r.group(1))))
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
-        self.add(('([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+        self.add(('^([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
         self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
         self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.insertAlbum(r.group(2))))
 
@@ -115,6 +115,12 @@ class Lineage:
                 track = disk.track(track_number)
                 track.filename = filename
                 track.checksum = checksum
+
+                if track.title == '':
+                    res2 = re.search('[0-9]+ - (.*).flac', filename)
+                    if res2 is not None:
+                        track.title = res2.group(1)
+                
                 print '[processed %s %s]' % (track_number, track.filename)
 
     def add(self, entry):
@@ -125,6 +131,7 @@ class Lineage:
             expr,b = t
             res = re.search(expr, line)
             if res is not None:
+                print '%s matches %s' % (line, expr)
                 b(res)
                 break
 
@@ -133,5 +140,6 @@ class Lineage:
             expr,b = t
             res = re.search(expr, line)
             if res is not None:
+                print '%s matches %s' % (line, expr)
                 return res.groups()
 
