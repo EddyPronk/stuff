@@ -91,6 +91,7 @@ class TestLineage(unittest.TestCase):
         self.lineage.try_match_test('Track01.flac:1234567890abcdef0123456789012345')
         self.lineage.try_match_test('Track10.flac:1234567890abcdef0123456789012345')
         self.assertEqual(self.lineage.try_match_test('DISC 2'), ('DISC' , '2'))
+        #self.assertEqual(self.lineage.try_match_test('d3t01.flac'), ('3' , '01'))
 
     def testChecksum1(self):
         self.lineage.try_match('Track01.flac:1234567890abcdef0123456789012345')
@@ -121,6 +122,13 @@ class TestLineage(unittest.TestCase):
         self.lineage.readlines()
         self.assertEqual(self.lineage.album.disk(1).track(10).filename, '10. Take The Long Way Home.ape')
 
+    def testFilenameWithDiskNumber(self):
+        self.lineage.try_match('d1t01.flac')
+        #self.assertEqual(self.lineage.disk.number, 1)
+        self.lineage.try_match('d2t01.flac')
+        #self.assertEqual(self.lineage.disk.number, 2)
+        
+        
     def testDetectNumber(self):
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t01.flac')
         self.lineage.try_match('1234567890abcdef0123456789012345 *Faithless2005-08-19_t02.flac')

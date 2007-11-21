@@ -22,11 +22,13 @@ class Lineage:
         self.disk = self.album.disk(1)
 
         self.checksums = {}
+        #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.insertAlbum(r.group(1))))
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
         self.add(('([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
         self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-        self.add(('(DISC|cd|CD)\s*([0-9])',       lambda r : self.insertAlbum(r.group(2))))
+        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.insertAlbum(r.group(2))))
+
 
     def extract(self):
         album = Album()
@@ -54,7 +56,10 @@ class Lineage:
 
     def insertTitle(self,number, title):
         track_number = string.atoi(number)
-        print '[track #%s "%s"]' % (track_number, title)
+        if track_number > 100:
+            print '[IGNORE title #%s "%s"]' % (track_number, title)
+            return
+        print '[title #%s "%s"]' % (track_number, title)
         track = self.disk.track(track_number)
         #track.title = " ".join([ word.capitalize() for word in title.split() ])
         track.title = title
@@ -66,8 +71,13 @@ class Lineage:
         res = re.search(expr, filename)
         if res is not None:
             dir, filename = os.path.split(filename)
-            print dir
             self.try_match(dir)
+            
+            res = re.search('^d([0-9]+)t([0-9]+)', filename)
+            if res is not None:
+                pass
+                self.insertAlbum(res.group(1))
+
             self.disk.checksums[filename] = checksum
         else:
             print '[ignoring %s]' % filename
@@ -96,9 +106,12 @@ class Lineage:
 
     def process(self):
         for disk in self.album.disks.values():
+            print 'DISK %d' % disk.number
             res = find_diffs(disk.checksums.keys())
             for filename, checksum in disk.checksums.iteritems():
                 track_number = string.atoi(re.search('([0-9]+)', filename[res:]).group(1))
+
+                #self.try_match(filename)
                 track = disk.track(track_number)
                 track.filename = filename
                 track.checksum = checksum
