@@ -62,7 +62,10 @@ class Lineage:
         print '[title #%s "%s"]' % (track_number, title)
         track = self.disk.track(track_number)
         #track.title = " ".join([ word.capitalize() for word in title.split() ])
-        track.title = title
+        res = re.search('(.*)[0-9]{2}:[0-9]{2}$', title)
+        if res is not None:
+            title = res.group(1)
+        track.title = title.rstrip()
         track.title = track.title.replace(' / ', ', ')
 
     def insertChecksum(self, filename, checksum):
@@ -74,6 +77,11 @@ class Lineage:
             self.try_match(dir)
             
             res = re.search('^d([0-9]+)t([0-9]+)', filename)
+            if res is not None:
+                pass
+                self.insertAlbum(res.group(1))
+
+            res = re.search('^([0-9]+)-([0-9]+)', filename)
             if res is not None:
                 pass
                 self.insertAlbum(res.group(1))
