@@ -3,6 +3,10 @@ import string
 import os
 import album
 
+def log(level, s):
+    #print s
+    pass
+
 def all_same(l):
     first_item = iter(l).next()
     for cur_item in l:
@@ -46,20 +50,20 @@ class Lineage:
         for line in self.input_file.readlines():
             line = line.replace('\r', '')
             line = line.replace('\n', '')
-            print line
+            log(3, line)
             self.try_match(line)
         self.process()
 
     def insertAlbum(self, disk_number):
         self.disk = self.album.disk(string.atoi(disk_number))
-        print '[disk #%s]' % disk_number
+        log(2, '[disk #%s]' % disk_number)
 
     def insertTitle(self,number, title):
         track_number = string.atoi(number)
         if track_number > 100:
-            print '[IGNORE title #%s "%s"]' % (track_number, title)
+            log(1, '[IGNORE title #%s "%s"]' % (track_number, title))
             return
-        print '[title #%s "%s"]' % (track_number, title)
+        log(2, '[title #%s "%s"]' % (track_number, title))
         track = self.disk.track(track_number)
         #track.title = " ".join([ word.capitalize() for word in title.split() ])
         res = re.search('(.*)[0-9]{2}:[0-9]{2}$', title)
@@ -69,7 +73,7 @@ class Lineage:
         track.title = track.title.replace(' / ', ', ')
 
     def insertChecksum(self, filename, checksum):
-        print '[checksum file=%s checksum=%s]' % (filename, checksum)
+        log(2, '[checksum file=%s checksum=%s]' % (filename, checksum))
         expr = '\.(flac|ape)$'
         res = re.search(expr, filename)
         if res is not None:
@@ -96,6 +100,7 @@ class Lineage:
             self.write_cue_sheet_(file, disk)
 
     def write_cue_sheet_(self, file, disk):
+        print 'write_cue_sheet_ %i' % disk.number
         #self.file = open(filename, 'w')
         #file = self.file
         file.write('PERFORMER ""\n')
@@ -114,7 +119,7 @@ class Lineage:
 
     def process(self):
         for disk in self.album.disks.values():
-            print 'DISK %d' % disk.number
+            log(2, '[DISK %d]' % disk.number)
             res = find_diffs(disk.checksums.keys())
             for filename, checksum in disk.checksums.iteritems():
                 track_number = string.atoi(re.search('([0-9]+)', filename[res:]).group(1))
@@ -129,7 +134,7 @@ class Lineage:
                     if res2 is not None:
                         track.title = res2.group(1)
                 
-                print '[processed %s %s]' % (track_number, track.filename)
+                log(2, '[processed %s %s]' % (track_number, track.filename))
 
     def add(self, entry):
         self.r.append(entry)
@@ -139,7 +144,7 @@ class Lineage:
             expr,b = t
             res = re.search(expr, line)
             if res is not None:
-                print '%s matches %s' % (line, expr)
+                log(3, '%s matches %s' % (line, expr))
                 b(res)
                 break
 
@@ -148,6 +153,6 @@ class Lineage:
             expr,b = t
             res = re.search(expr, line)
             if res is not None:
-                print '%s matches %s' % (line, expr)
+                log(3, '%s matches %s' % (line, expr))
                 return res.groups()
 

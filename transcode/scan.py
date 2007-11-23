@@ -12,6 +12,7 @@ class Scanner:
             res = re.search(pattern, l)
             if res is not None and os.path.isfile(l):
                 newlist.append(os.path.join(parent, l))
+
         return newlist
 
     def scan(self, dir):
@@ -22,8 +23,6 @@ class Scanner:
 	for i in self.album_list:
             uniquedict[i] = 0
         print
-        #for l in uniquedict.keys():
-        #    print l
     
     def traverse(self, dir, parent = None):
         cwd = os.getcwd()
@@ -32,7 +31,7 @@ class Scanner:
         list = glob.glob("*")
         for l in list:
             if os.path.isdir(l):
-                res = re.search('(CD|Disc)\w*([0-9])', l)
+                res = re.search('(CD|Disc)\s*([0-9])', l)
                 if res is not None:
                     self.disc = string.atoi(res.group(2))
                 self.traverse(l, os.getcwd())
@@ -77,7 +76,8 @@ class Scanner:
 
             class FileFaker:
                 def write(self, string):
-                    print string
+                    #print string
+                    pass
 
             file = FileFaker()
             for l in txt:
@@ -91,4 +91,8 @@ class Scanner:
         os.chdir(cwd)
 
 s = Scanner()
-s.scan('/media/data')
+#s.scan('/media/data')
+s.scan('/media/data/[05.24.92]  Flanders Expo')
+#s.scan('/media/data/Prince and the Revolution - Stockholm 1986')
+#s.scan('/media/data/Parliament Funkadelic Unreleased SBD/')
+#s.scan('/media/data/done/test') #Prince - Indigo2, London, 6 September 2007/')
