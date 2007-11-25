@@ -19,7 +19,11 @@ import string
 import cuesheet
 import os
 
-file = open('montreux.cue')
+cue_sheet = '/home/epronk/4dafunk/4DaFunk/4DaFunk Open Sessions/cd1/disc1.cue'
+
+dir, filename = os.path.split(cue_sheet)
+os.chdir(dir)
+file = open(filename)
 input = file.read()
 tokens = cuesheet.parse('sheet', input)
 
@@ -82,6 +86,8 @@ for track in album.tracks.values():
     opt.option('--tn', track.number) # track
 
     filename = os.path.join(dir, '%02d. %s.mp3' % (track.number, track.title))
-    cmd = 'flac --decode --silent --stdout "%s" | lame - "%s" --preset standard ' % (track.file, filename) + ' '.join(opt.str)
+    lame = 'lame - "%s" --quiet --preset standard ' % filename + ' '.join(opt.str)
+    #cmd = 'flac --decode --silent --stdout "%s" | %s' % (track.file, lame)
+    cmd = 'mac "%s" /dev/stdout -d 2>&1 >/dev/null| %s>/dev/null' % (track.file, lame)
     print cmd
-    os.system(cmd)
+    #os.system(cmd)
