@@ -9,11 +9,12 @@ class Track:
         else:
             return getattr(self.album, name)
 
-class Disk:
-    def __init__(self, disk_number):
+class Disc:
+    def __init__(self, disc_number):
         self.tracks = {}
         self.checksums = {}
-        self.number = disk_number
+        self.number = disc_number
+        self.content_root = ''
 
     def track(self, track_number):
         if self.tracks.has_key(track_number):
@@ -24,13 +25,15 @@ class Disk:
 
 class Album:
     def __init__(self):
-        self.disks = {}
+        self.discs = {}
+        self.disc(1)
 
-    def disk(self, disk_number):
-        if self.disks.has_key(disk_number):
-            disk = self.disks[disk_number]
+    def disc(self, disc_number):
+        if self.discs.has_key(disc_number):
+            disc = self.discs[disc_number]
         else:
-            self.disks[disk_number] = Disk(disk_number)
-            disk = self.disks[disk_number]
-            disk.number = disk_number
-        return disk
+            self.discs[disc_number] = Disc(disc_number)
+            disc = self.discs[disc_number]
+            disc.number = disc_number
+            disc.content_root = self.discs[1].content_root
+        return disc

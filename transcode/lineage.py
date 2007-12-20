@@ -80,7 +80,6 @@ class Lineage:
         if track_number > 100:
             log(1, '[IGNORE title #%s "%s"]' % (track_number, title))
             return
-        log(2, '[title #%s "%s"]' % (track_number, title))
 
         #print 'tr %d < last %d' % (track_number, self.last_track_number)
         if (track_number < self.last_track_number):
@@ -91,27 +90,35 @@ class Lineage:
         track = self.disc.track(track_number)
         res = re.search('(.*)[0-9]{2}:[0-9]{2}$', title)
         if res is not None:
+            print 'not none'
             title = res.group(1)
-        track.title = title.rstrip()
-        track.title = track.title.replace(' / ', ', ')
+        title = title.rstrip()
+        #title = track.title.replace(' / ', ', ')
+        res = re.search('(.*)\.(flac|ape|shn)$', title)
+        if res is not None:
+            title = res.group(1)
+        log(2, '[title #%s "%s"]' % (track_number, title))
+        track.title = title
 
     def insertChecksum(self, path, checksum):
-
         # fix the directory seperator
         path = path.replace('\\', '/')
 
         log(2, '[checksum file=%s checksum=%s]' % (path, checksum))
-        expr = '\.(flac|ape)$'
+        expr = '\.(flac|ape|shn)$'
+        dir, filename = os.path.split(path)
         res = re.search(expr, path)
         if res is not None:
-            dir, filename = os.path.split(path)
             self.parseDisc(dir, 'in %s' % path)
             
             # parse d1t3.ape
-            res = re.search('^d([0-9]+)t([0-9]+)', filename)
+            #res = re.search('d([0-9]+)t([0-9]+)', filename)
+            res = re.search('d([0-9]+)\s?t([0-9]+)', filename)
             if res is not None:
-                pass
                 self.selectDisc(res.group(1))
+            else:
+                print 'no match'
+        
 
             # parse 1-2.ape
             res = re.search('^([0-9]+)-([0-9]+)', filename)

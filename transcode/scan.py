@@ -105,10 +105,11 @@ class ScanGuy:
                     txt.extend(extra_txt)
                 else:
                     print 'searching for meta data -- not found!'
+                    album_dir = dir
                 self.parent_done = True
 
-                self.album_dir = album_dir
                 if len(txt):
+                    self.album_dir = album_dir
                     print 'root %s' % album_dir
                     content_root = os.getcwd()
 
@@ -135,7 +136,7 @@ class ScanGuy:
         self.media_files = []
 
     def on_file(self, file):
-        expr = '\.(flac|ape)$'
+        expr = '\.(flac|ape|shn)$'
         res = re.search(expr, file)
         if res is not None and os.path.isfile(file):
             self.media_files.append(file)
@@ -155,7 +156,9 @@ s = Scanner(f)
 #s.scan('/media/data/done')
 #s.scan('/media/data/done/Prince - Indigo2, London, 6 September 2007')
 #s.scan('/home/epronk/4dafunk/4DaFunk/4DaFunk Open Sessions')
-s.scan('/home/epronk/4dafunk')
+#s.scan('/home/epronk/4dafunk')
+#s.scan('/home/epronk/zappa')
+s.scan('/home/epronk/pol')
 #s.scan('/media/data/done/Rock Over Germany/')
 #s.scan('/media/data/test')
 #s.scan('/media/data/[05.24.92]  Flanders Expo')
