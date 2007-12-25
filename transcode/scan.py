@@ -26,6 +26,7 @@ parser = OptionParser()
 
 (options, args) = parser.parse_args()
 
+options.overwrite = True
 
 def chdir(dir):
     #print 'chdir %s' % dir
@@ -71,24 +72,31 @@ class FlayGuy:
         print 'file %s' % file
 
 class ScanGuy:
-    def __init__(self):
-        self.lineage = lineage.Lineage()
+
+    def make_lineage(self):
+        l = lineage.Lineage(options)
+        l.on_cue_sheet_written = self.callback
+        return l
+
+    def __init__(self, callback):
+        self.callback = callback
+        self.lineage = self.make_lineage()
         self.album_dir = ''
         self.disc_number = 1
         self.parent_done = False # metadata in parent has not been read
 
     def on_enter_dir(self, dir, parent = None):
-        print 'entering %s' % dir
         res = re.search('(CD|cd|Disc)\s*([0-9])', dir)
         if res is not None:
             self.disc_number = string.atoi(res.group(2))
+        else:
+            self.disc_number = 1
         self.media_files = []
 
     def on_leaving_dir(self, dir, parent = None):
         if len(self.media_files):
             content_dir = os.getcwd()
             self.lineage.album.disc(self.disc_number).content_root = content_dir
-            print 'media files for disc %i in %s' % (self.disc_number, content_dir)
             txt = self.glob(content_dir, '\.(txt|ffp|md5)$')
             if len(txt):
                 print 'searching for meta data -- found!'
@@ -128,9 +136,9 @@ class ScanGuy:
         print 'leaving %s' % dir
 
         if dir == self.album_dir:
-            print 'RESET'
-            self.lineage.write_cue_sheet()
-            self.lineage = lineage.Lineage()
+            print 'write_cue_sheet in %s' % os.getcwd()
+            self.lineage.write_cue_sheets()
+            self.lineage = self.make_lineage()
             self.album_dir = ''
             self.parent_done = False
         self.media_files = []
@@ -140,6 +148,7 @@ class ScanGuy:
         res = re.search(expr, file)
         if res is not None and os.path.isfile(file):
             self.media_files.append(file)
+            #os.system('rm %s' % file)
 
     def glob(self, parent, pattern):
         txt = glob.glob("*") 
@@ -150,18 +159,47 @@ class ScanGuy:
                 newlist.append(os.path.join(parent, l))
         return newlist
 
-f = ScanGuy()
-s = Scanner(f)
 #s.scan('/media/data')
 #s.scan('/media/data/done')
 #s.scan('/media/data/done/Prince - Indigo2, London, 6 September 2007')
 #s.scan('/home/epronk/4dafunk/4DaFunk/4DaFunk Open Sessions')
 #s.scan('/home/epronk/4dafunk')
 #s.scan('/home/epronk/zappa')
-s.scan('/home/epronk/pol')
+#s.scan('/home/epronk/pol')
+
+class RegressionTester:
+    def __init__(self):
+        self.tests = 0
+        self.failed = 0
+        
+    def compare(self, file):
+        self.tests += 1
+        expected_file = file + '.expected'
+        #os.system('cp "%s" "%s"' % (file, expected_file))
+        cmd = 'diff "%s" "%s"' % (file, expected_file)
+        print cmd
+        res = os.system(cmd)
+        print res
+        if(res != 0):
+            self.failed += 1
+        else:
+            os.remove(file)
+
+    def report(self):
+        print 'ran %i tests, failed %i' % (self.tests, self.failed)
+        
+
+tester = RegressionTester()
+f = ScanGuy(callback=tester.compare)
+s = Scanner(f)
+#s.scan('/home/epronk/src/transcode-testing')
+s.scan('/home/epronk/src/transcode-testing/1982-07-04 - Rock Werchter [FM]')
+#s.scan('/home/epronk/src/transcode-testing/4DaFunk/4DaFunk Open Sessions')
+
 #s.scan('/media/data/done/Rock Over Germany/')
 #s.scan('/media/data/test')
 #s.scan('/media/data/[05.24.92]  Flanders Expo')
 #s.scan('/media/data/Prince and the Revolution - Stockholm 1986')
 #s.scan('/media/data/Parliament Funkadelic Unreleased SBD/')
 #s.scan('/media/data/done/test') #Prince - Indigo2, London, 6 September 2007/')
+tester.report()

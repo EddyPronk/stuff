@@ -20,7 +20,9 @@ def find_diffs(data):
             return item_num
 
 class Lineage:
-    def __init__(self):
+    def __init__(self, options):
+        self.options = options
+        self.on_cue_sheet_written = None
         self.r = []
         self.album = album.Album()
         self.last_track_number = 0
@@ -32,6 +34,7 @@ class Lineage:
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
         self.add(('^([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
         self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+        self.add(('([0-9]+)\. \(.*\) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
 #        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.selectDisc(r.group(2))))
 
 
@@ -51,6 +54,7 @@ class Lineage:
         
     def read(self, filename):
         self.selectDisc('1')
+        self.last_track_number = 1
         print 'read %s' % filename
         self.last_track_number = 0
         self.parseDisc(filename, 'matches filename') # bit hacky
@@ -83,6 +87,7 @@ class Lineage:
 
         #print 'tr %d < last %d' % (track_number, self.last_track_number)
         if (track_number < self.last_track_number):
+            print '%i < %i next disc' % (track_number, self.last_track_number)
             self.nextDisc()
 
         self.last_track_number = track_number
@@ -119,7 +124,6 @@ class Lineage:
             else:
                 print 'no match'
         
-
             # parse 1-2.ape
             res = re.search('^([0-9]+)-([0-9]+)', filename)
             if res is not None:
@@ -137,18 +141,22 @@ class Lineage:
             print '[ignoring %s]' % filename
 
 
-    def write_cue_sheet(self):
+    def write_cue_sheets(self):
         for disc in self.album.discs.values():
+            print 'content_root %s' % disc.content_root
             cue_filename = os.path.join(disc.content_root, 'disc%d.cue' % disc.number)
 
             class FileFaker:
                 def write(self, string):
                     print string
 
-            if not os.path.exists(cue_filename):
+            if not os.path.exists(cue_filename) or self.options.overwrite:
                 print 'writing cue file for disc #%i to %s' % (disc.number, cue_filename)
                 file = open(cue_filename, 'w')
                 self.write_cue_sheet_(file, disc)
+                file.close()
+                if(self.on_cue_sheet_written):
+                    self.on_cue_sheet_written(cue_filename)
             else:
                 print 'writing cue file for disc #%i to %s (skipping, exists)' % (disc.number, cue_filename)
 

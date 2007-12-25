@@ -243,5 +243,5 @@ f = CueSheetVisitor()
 s = Scanner(f)
 
 #s.scan('/home/epronk/zappa')
-s.scan('/home/epronk/pol')
+s.scan('/home/epronk/transcode-testing/fz1980-05-24.shnf')
 #s.scan('/home/epronk/4dafunk')
