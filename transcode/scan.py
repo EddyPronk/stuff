@@ -175,6 +175,7 @@ class RegressionTester:
     def compare(self, file):
         self.tests += 1
         expected_file = file + '.expected'
+        os.system('cat "%s"' % file)
         #os.system('cp "%s" "%s"' % (file, expected_file))
         cmd = 'diff "%s" "%s"' % (file, expected_file)
         print cmd
@@ -192,8 +193,8 @@ class RegressionTester:
 tester = RegressionTester()
 f = ScanGuy(callback=tester.compare)
 s = Scanner(f)
-#s.scan('/home/epronk/src/transcode-testing')
-s.scan('/home/epronk/src/transcode-testing/1982-07-04 - Rock Werchter [FM]')
+s.scan('/home/epronk/src/transcode-testing')
+#s.scan('/home/epronk/src/transcode-testing/1982-07-04 - Rock Werchter [FM]')
 #s.scan('/home/epronk/src/transcode-testing/4DaFunk/4DaFunk Open Sessions')
 
 #s.scan('/media/data/done/Rock Over Germany/')

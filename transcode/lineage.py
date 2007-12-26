@@ -24,6 +24,7 @@ class Lineage:
         self.options = options
         self.on_cue_sheet_written = None
         self.r = []
+        self.title_filters = []
         self.album = album.Album()
         self.last_track_number = 0
         self.selectDisc('1')
@@ -32,9 +33,15 @@ class Lineage:
         #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.selectDisc(r.group(1))))
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
-        self.add(('^([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-        self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-        self.add(('([0-9]+)\. \(.*\) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+
+        #self.add(('^([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+        #self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+        #self.add(('([0-9]+)\. \(.*\) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
+
+        self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
+
 #        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.selectDisc(r.group(2))))
 
 
@@ -60,6 +67,22 @@ class Lineage:
         self.parseDisc(filename, 'matches filename') # bit hacky
         self.input_file = open(filename)
         self.readlines()
+        m = [i.matches for i in self.title_filters]
+        #print m
+        x = 0
+        longest = 0
+        for i, list in enumerate(m):
+            print list
+            l = len(list)
+            print l
+            if(l > x):
+                x = l
+                longest = i
+
+        print 'longest %i' % longest
+        for title in m[longest]:
+            self.insertTitle(title[0], title[1], title[2])
+            
 
     def readlines(self):
         for line in self.input_file.readlines():
@@ -79,7 +102,7 @@ class Lineage:
         log(2, '[disc #%s]' % disc_number)
         self.disc = self.album.disc(disc_number)
 
-    def insertTitle(self,number, title):
+    def insertTitle(self, number, artist, title):
         track_number = string.atoi(number)
         if track_number > 100:
             log(1, '[IGNORE title #%s "%s"]' % (track_number, title))
@@ -192,12 +215,30 @@ class Lineage:
                 if track.title == '':
                     res2 = re.search('[0-9]+ - (.*).flac', filename)
                     if res2 is not None:
-                        track.title = res2.group(1)
+                        #track.title = res2.group(1)
+                        pass
                 
                 log(2, '[processed %s %s]' % (track_number, track.filename))
 
     def add(self, entry):
         self.r.append(entry)
+
+    class TitleFilter():
+        def __init__(self, re, f):
+            self.re = re
+            self.f = f
+            self.matches = []
+
+        def apply(self, line):
+            res = re.search(self.re, line)
+            if res is not None:
+                log(3, 'apply [%s matches %s]' % (line, self.re))
+                print self.f(res)
+                self.matches.append(self.f(res))
+
+    def add_filter(self, re, f):
+        filter = self.TitleFilter(re, f)
+        self.title_filters.append(filter)
 
     def try_match(self, line):
         for t in self.r:
@@ -206,7 +247,10 @@ class Lineage:
             if res is not None:
                 log(3, '[%s matches %s]' % (line, expr))
                 b(res)
-                break
+                return
+
+        for t in self.title_filters:
+            t.apply(line)
 
     def try_match_test(self, line):
         for t in self.r:
