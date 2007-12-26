@@ -83,6 +83,8 @@ class Lineage:
         for title in m[longest]:
             self.insertTitle(title[0], title[1], title[2])
             
+        for t in self.title_filters:
+            t.matches = []
 
     def readlines(self):
         for line in self.input_file.readlines():
