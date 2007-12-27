@@ -34,10 +34,6 @@ class Lineage:
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
 
-        #self.add(('^([0-9]+)\.\s*(.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-        #self.add(('^([0-9]+) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-        #self.add(('([0-9]+)\. \(.*\) (.*)',   lambda r : self.insertTitle(r.group(1), r.group(2))))
-
         self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
@@ -59,6 +55,35 @@ class Lineage:
             print '[disc #%s matches, %s]' % (disc_number, comment)
             self.selectDisc(disc_number)
         
+    def read2(self, filename, files):
+        file =  open(filename)
+
+        #print files.sort()
+        files.sort()
+        document = []
+        paragraph = []
+
+        for line in file.readlines():
+            line = line.replace('\r', '')
+            line = line.replace('\n', '')
+            if line == '':
+                if(len(paragraph)):
+                    document.append(paragraph)
+                paragraph = []
+            else:
+                paragraph.append(line)
+
+        if(len(paragraph)):
+            document.append(paragraph)
+
+        for paragraph in document:
+            if len(paragraph) == 13:
+                for i, line in enumerate(paragraph):
+                    track_number = i + 1
+                    track = self.disc.track(track_number)
+                    track.title = line
+                    track.filename = files[i]
+
     def read(self, filename):
         self.selectDisc('1')
         self.last_track_number = 1

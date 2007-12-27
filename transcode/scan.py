@@ -103,6 +103,8 @@ class ScanGuy:
             else:
                 print 'searching for meta data -- not found, trying parent dir'
 
+            files = glob.glob("*.flac") 
+
             if not self.parent_done:
                 chdir(parent)
                 extra_txt = self.glob(parent, '\.(txt|ffp|md5)$')
@@ -118,18 +120,23 @@ class ScanGuy:
 
                 if len(txt):
                     self.album_dir = album_dir
-                    print 'root %s' % album_dir
                     content_root = os.getcwd()
 
                 class FileFaker:
                     def write(self, string):
-                        #print string
                         pass
 
                 file = FileFaker()
                 for l in txt:
                     #log(2, 'read meta data from %s' % l)
                     self.lineage.read(l)
+
+                if len(self.lineage.album.disc(1).tracks) == 0:
+                    print 'do the amy thing'
+
+                    for l in txt:
+                        self.lineage.read2(l, files)
+                    pass
             else:
                 print 'already have info from parent'
 
@@ -175,12 +182,9 @@ class RegressionTester:
     def compare(self, file):
         self.tests += 1
         expected_file = file + '.expected'
-        os.system('cat "%s"' % file)
         #os.system('cp "%s" "%s"' % (file, expected_file))
         cmd = 'diff "%s" "%s"' % (file, expected_file)
-        print cmd
         res = os.system(cmd)
-        print res
         if(res != 0):
             self.failed += 1
         else:
@@ -194,6 +198,7 @@ tester = RegressionTester()
 f = ScanGuy(callback=tester.compare)
 s = Scanner(f)
 s.scan('/home/epronk/src/transcode-testing')
+#s.scan('/home/epronk/src/transcode-testing/amy')
 #s.scan('/home/epronk/src/transcode-testing/1982-07-04 - Rock Werchter [FM]')
 #s.scan('/home/epronk/src/transcode-testing/4DaFunk/4DaFunk Open Sessions')
 
