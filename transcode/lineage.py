@@ -65,7 +65,7 @@ class Generic:
             res = re.search(self.re, line)
             if res is not None:
                 log(3, 'apply [%s matches %s]' % (line, self.re))
-                print self.f(res)
+                self.f(res)
                 self.matches.append(self.f(res))
 
     def __init__(self, album):
@@ -73,13 +73,16 @@ class Generic:
         self.r = []
         self.title_filters = []
         self.last_track_number = 0
+        self.last_track_number2 = 0
         self.selectDisc('1')
 
         self.checksums = {}
         #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.selectDisc(r.group(1))))
+
         self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
         self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
 
+        self.add_filter('^([0-9]+)\s+\d+:\d{2}\.\d{2}\s+(.*)', lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
@@ -97,6 +100,7 @@ class Generic:
     def selectDisc(self, disc_number):
     
         self.disc = self.album.disc(string.atoi(disc_number))
+        self.last_track_number2 = 0
         log(2, '[disc #%s]' % disc_number)
 
     def nextDisc(self):
@@ -141,6 +145,16 @@ class Generic:
         if res is not None:
             self.parseDisc(dir, 'in %s' % path)
             
+            res = re.search('^([0-9]+)', filename)
+            if res is not None:
+                print 'matches %s' % filename
+                track_number = string.atoi(res.group(1))
+                if (track_number < self.last_track_number2):
+                    print '%i < %i next disc' % (track_number, self.last_track_number2)
+                    self.nextDisc()
+
+                self.last_track_number2 = track_number
+
             # parse d1t3.ape
             res = re.search('d([0-9]+)\s?t([0-9]+)', filename)
             if res is not None:
@@ -166,25 +180,24 @@ class Generic:
 
     def read(self, filename, content):
         self.selectDisc('1')
-        self.last_track_number = 1
         print 'read %s' % filename
         self.last_track_number = 0
+        self.last_track_number2 = 0
         self.parseDisc(filename, 'matches filename') # bit hacky
         self.input_file = open(filename)
         self.readlines()
+        self.process()
         m = [i.matches for i in self.title_filters]
         #print m
         x = 0
         longest = 0
         for i, list in enumerate(m):
-            print list
             l = len(list)
             print l
             if(l > x):
                 x = l
                 longest = i
 
-        print 'longest %i' % longest
         for title in m[longest]:
             self.insertTitle(title[0], title[1], title[2])
             
@@ -204,7 +217,6 @@ class Generic:
             line = line.replace('\n', '')
             log(3, line)
             self.try_match(line)
-        self.process()
 
     def process(self):
         for disc in self.album.discs.values():
@@ -224,7 +236,9 @@ class Generic:
                         #track.title = res2.group(1)
                         pass
                 
-                log(2, '[processed %s %s]' % (track_number, track.filename))
+                log(2, "[processed %s '%s']" % (track_number, track.filename))
+
+            #disc.checksums = {}
 
     def try_match(self, line):
         for t in self.r:
@@ -254,13 +268,6 @@ class Lineage:
         self.methods = []
         self.methods.append(Generic(self.album))
         self.methods.append(Simple(self.album))
-
-    def extract(self):
-        album = Album()
-        file = open("montreux.txt")
-        for line in file.readlines():
-            parse(line)
-        album.do_print()
 
     def parse(self, files, content):
         for method in self.methods:

@@ -22,19 +22,13 @@ import string
 import lineage
 from optparse import OptionParser
 
-parser = OptionParser()
-
-(options, args) = parser.parse_args()
-
-options.overwrite = True
-
 def chdir(dir):
     #print 'chdir %s' % dir
     os.chdir(dir)
 
 class Scanner:
-    def __init__(self, object):
-        self.object = object
+    def __init__(self, directory_visitor = None):
+        self.directory_visitor = directory_visitor
 
     def glob(self, parent, pattern):
         txt = glob.glob("*") 
@@ -52,15 +46,15 @@ class Scanner:
     def traverse(self, dir, parent = None):
         cwd = os.getcwd()
         chdir(dir)
-        self.object.on_enter_dir(dir, cwd)
+        self.directory_visitor.on_enter_dir(dir, cwd)
         list = glob.glob("*")
         for l in list:
             if os.path.isdir(l):
                 self.traverse(l, os.getcwd())
             else:
-                self.object.on_file(l)
+                self.directory_visitor.on_file(l)
 
-        self.object.on_leaving_dir(os.getcwd(), cwd)
+        self.directory_visitor.on_leaving_dir(os.getcwd(), cwd)
         chdir(cwd)
 
 class FlayGuy:
@@ -78,7 +72,7 @@ class ScanGuy:
         l.on_cue_sheet_written = self.callback
         return l
 
-    def __init__(self, callback):
+    def __init__(self, callback = None):
         self.callback = callback
         self.lineage = self.make_lineage()
         self.album_dir = ''
@@ -157,14 +151,6 @@ class ScanGuy:
                 newlist.append(os.path.join(parent, l))
         return newlist
 
-#s.scan('/media/data')
-#s.scan('/media/data/done')
-#s.scan('/media/data/done/Prince - Indigo2, London, 6 September 2007')
-#s.scan('/home/epronk/4dafunk/4DaFunk/4DaFunk Open Sessions')
-#s.scan('/home/epronk/4dafunk')
-#s.scan('/home/epronk/zappa')
-#s.scan('/home/epronk/pol')
-
 class RegressionTester:
     def __init__(self):
         self.tests = 0
@@ -174,7 +160,7 @@ class RegressionTester:
         self.tests += 1
         expected_file = file + '.expected'
         #os.system('cp "%s" "%s"' % (file, expected_file))
-        cmd = 'diff "%s" "%s"' % (file, expected_file)
+        cmd = 'diff "%s" "%s"' % (expected_file, file)
         res = os.system(cmd)
         if(res != 0):
             self.failed += 1
@@ -185,18 +171,30 @@ class RegressionTester:
         print 'ran %i tests, failed %i' % (self.tests, self.failed)
         
 
-tester = RegressionTester()
-f = ScanGuy(callback=tester.compare)
-s = Scanner(f)
-s.scan('/home/epronk/src/transcode-testing')
-#s.scan('/home/epronk/src/transcode-testing/amy')
-#s.scan('/home/epronk/src/transcode-testing/1982-07-04 - Rock Werchter [FM]')
-#s.scan('/home/epronk/src/transcode-testing/4DaFunk/4DaFunk Open Sessions')
+if __name__ == '__main__':
 
-#s.scan('/media/data/done/Rock Over Germany/')
-#s.scan('/media/data/test')
-#s.scan('/media/data/[05.24.92]  Flanders Expo')
-#s.scan('/media/data/Prince and the Revolution - Stockholm 1986')
-#s.scan('/media/data/Parliament Funkadelic Unreleased SBD/')
-#s.scan('/media/data/done/test') #Prince - Indigo2, London, 6 September 2007/')
-tester.report()
+    parser = OptionParser()
+
+    parser.add_option("-R", "--regression-testing", dest="regression_testing", action="store_true",
+                      help="runs regression tests")
+    parser.add_option("-f", "--force", dest="overwrite", action="store_true",
+                      help="Forces overwriting of cue files.")
+
+    (options, args) = parser.parse_args()
+
+    if options.regression_testing:
+        options.overwrite = True
+        tester = RegressionTester()
+        f = ScanGuy(callback=tester.compare)
+        args = [ '/home/epronk/src/transcode-testing' ]
+    else:
+        f = ScanGuy()
+
+    s = Scanner(f)
+
+    for path in args:
+        print 'scanning %s' % path
+        s.scan(path)
+
+    if options.regression_testing:
+        tester.report()
