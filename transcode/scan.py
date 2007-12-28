@@ -103,7 +103,7 @@ class ScanGuy:
             else:
                 print 'searching for meta data -- not found, trying parent dir'
 
-            files = glob.glob("*.flac") 
+            content = glob.glob("*.flac") 
 
             if not self.parent_done:
                 chdir(parent)
@@ -126,17 +126,8 @@ class ScanGuy:
                     def write(self, string):
                         pass
 
-                file = FileFaker()
-                for l in txt:
-                    #log(2, 'read meta data from %s' % l)
-                    self.lineage.read(l)
+                self.lineage.parse(txt, content)
 
-                if len(self.lineage.album.disc(1).tracks) == 0:
-                    print 'do the amy thing'
-
-                    for l in txt:
-                        self.lineage.read2(l, files)
-                    pass
             else:
                 print 'already have info from parent'
 

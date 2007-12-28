@@ -19,43 +19,12 @@ def find_diffs(data):
         if not all_same(items):
             return item_num
 
-class Lineage:
-    def __init__(self, options):
-        self.options = options
-        self.on_cue_sheet_written = None
-        self.r = []
-        self.title_filters = []
-        self.album = album.Album()
-        self.last_track_number = 0
-        self.selectDisc('1')
+class Simple:
 
-        self.checksums = {}
-        #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.selectDisc(r.group(1))))
-        self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
-        self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
+    def __init__(self, album):
+        self.album = album
 
-        self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
-        self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
-        self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
-
-#        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.selectDisc(r.group(2))))
-
-
-    def extract(self):
-        album = Album()
-        file = open("montreux.txt")
-        for line in file.readlines():
-            parse(line)
-        album.do_print()
-
-    def parseDisc(self, s, comment):
-        res = re.search('(DISC|Disc|cd|CD)\s*([0-9])', s)
-        if res is not None:
-            disc_number = res.group(2)
-            print '[disc #%s matches, %s]' % (disc_number, comment)
-            self.selectDisc(disc_number)
-        
-    def read2(self, filename, files):
+    def read(self, filename, files):
         file =  open(filename)
 
         #print files.sort()
@@ -80,44 +49,50 @@ class Lineage:
             if len(paragraph) == 13:
                 for i, line in enumerate(paragraph):
                     track_number = i + 1
-                    track = self.disc.track(track_number)
+                    track = self.album.disc(1).track(track_number)
                     track.title = line
                     track.filename = files[i]
 
-    def read(self, filename):
-        self.selectDisc('1')
-        self.last_track_number = 1
-        print 'read %s' % filename
+class Generic:
+
+    class TitleFilter():
+        def __init__(self, re, f):
+            self.re = re
+            self.f = f
+            self.matches = []
+
+        def apply(self, line):
+            res = re.search(self.re, line)
+            if res is not None:
+                log(3, 'apply [%s matches %s]' % (line, self.re))
+                print self.f(res)
+                self.matches.append(self.f(res))
+
+    def __init__(self, album):
+        self.album = album
+        self.r = []
+        self.title_filters = []
         self.last_track_number = 0
-        self.parseDisc(filename, 'matches filename') # bit hacky
-        self.input_file = open(filename)
-        self.readlines()
-        m = [i.matches for i in self.title_filters]
-        #print m
-        x = 0
-        longest = 0
-        for i, list in enumerate(m):
-            print list
-            l = len(list)
-            print l
-            if(l > x):
-                x = l
-                longest = i
+        self.selectDisc('1')
 
-        print 'longest %i' % longest
-        for title in m[longest]:
-            self.insertTitle(title[0], title[1], title[2])
-            
-        for t in self.title_filters:
-            t.matches = []
+        self.checksums = {}
+        #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.selectDisc(r.group(1))))
+        self.add(('([^:]+):([0-9a-f]{32})', lambda r : self.insertChecksum(r.group(1), r.group(2))))
+        self.add(('([0-9a-f]{32}) \*(.*)',  lambda r : self.insertChecksum(r.group(2), r.group(1))))
 
-    def readlines(self):
-        for line in self.input_file.readlines():
-            line = line.replace('\r', '')
-            line = line.replace('\n', '')
-            log(3, line)
-            self.try_match(line)
-        self.process()
+        self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
+
+#        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.selectDisc(r.group(2))))
+
+
+    def add(self, entry):
+        self.r.append(entry)
+
+    def add_filter(self, re, f):
+        filter = self.TitleFilter(re, f)
+        self.title_filters.append(filter)
 
     def selectDisc(self, disc_number):
     
@@ -167,7 +142,6 @@ class Lineage:
             self.parseDisc(dir, 'in %s' % path)
             
             # parse d1t3.ape
-            #res = re.search('d([0-9]+)t([0-9]+)', filename)
             res = re.search('d([0-9]+)\s?t([0-9]+)', filename)
             if res is not None:
                 self.selectDisc(res.group(1))
@@ -190,42 +164,47 @@ class Lineage:
         else:
             print '[ignoring %s]' % filename
 
+    def read(self, filename, content):
+        self.selectDisc('1')
+        self.last_track_number = 1
+        print 'read %s' % filename
+        self.last_track_number = 0
+        self.parseDisc(filename, 'matches filename') # bit hacky
+        self.input_file = open(filename)
+        self.readlines()
+        m = [i.matches for i in self.title_filters]
+        #print m
+        x = 0
+        longest = 0
+        for i, list in enumerate(m):
+            print list
+            l = len(list)
+            print l
+            if(l > x):
+                x = l
+                longest = i
 
-    def write_cue_sheets(self):
-        for disc in self.album.discs.values():
-            print 'content_root %s' % disc.content_root
-            cue_filename = os.path.join(disc.content_root, 'disc%d.cue' % disc.number)
+        print 'longest %i' % longest
+        for title in m[longest]:
+            self.insertTitle(title[0], title[1], title[2])
+            
+        for t in self.title_filters:
+            t.matches = []
 
-            class FileFaker:
-                def write(self, string):
-                    print string
-
-            if not os.path.exists(cue_filename) or self.options.overwrite:
-                print 'writing cue file for disc #%i to %s' % (disc.number, cue_filename)
-                file = open(cue_filename, 'w')
-                self.write_cue_sheet_(file, disc)
-                file.close()
-                if(self.on_cue_sheet_written):
-                    self.on_cue_sheet_written(cue_filename)
-            else:
-                print 'writing cue file for disc #%i to %s (skipping, exists)' % (disc.number, cue_filename)
-
-    def write_cue_sheet_(self, file, disc):
-        #file = self.file
-        file.write('PERFORMER ""\n')
-        file.write('TITLE ""\n')
-        file.write('YEAR ""\n')
-        file.write('DISC "%d"\n' % disc.number)
-        file.write('COMMENT "LAME 3.97 (--preset standard)"\n')
-        file.write('\n')
-        for track in disc.tracks.values():
-            track.title = " ".join([ word.capitalize() for word in track.title.split() ])
-            #file.write('TRACK %s AUDIO\n' % track.number)
-            file.write('TRACK %s\n' % track.number)
-            file.write('  TITLE "%s"\n' % track.title)
-            #file.write('  FILE "%s" FLAC\n' % track.filename)
-            file.write('  FILE "%s"\n' % track.filename)
-            #file.write('  CHECKSUM "%s"\n' % track.checksum)
+    def parseDisc(self, s, comment):
+        res = re.search('(DISC|Disc|cd|CD)\s*([0-9])', s)
+        if res is not None:
+            disc_number = res.group(2)
+            print '[disc #%s matches, %s]' % (disc_number, comment)
+            self.selectDisc(disc_number)
+        
+    def readlines(self):
+        for line in self.input_file.readlines():
+            line = line.replace('\r', '')
+            line = line.replace('\n', '')
+            log(3, line)
+            self.try_match(line)
+        self.process()
 
     def process(self):
         for disc in self.album.discs.values():
@@ -247,26 +226,6 @@ class Lineage:
                 
                 log(2, '[processed %s %s]' % (track_number, track.filename))
 
-    def add(self, entry):
-        self.r.append(entry)
-
-    class TitleFilter():
-        def __init__(self, re, f):
-            self.re = re
-            self.f = f
-            self.matches = []
-
-        def apply(self, line):
-            res = re.search(self.re, line)
-            if res is not None:
-                log(3, 'apply [%s matches %s]' % (line, self.re))
-                print self.f(res)
-                self.matches.append(self.f(res))
-
-    def add_filter(self, re, f):
-        filter = self.TitleFilter(re, f)
-        self.title_filters.append(filter)
-
     def try_match(self, line):
         for t in self.r:
             expr,b = t
@@ -286,4 +245,60 @@ class Lineage:
             if res is not None:
                 log(3, '%s matches %s' % (line, expr))
                 return res.groups()
+
+class Lineage:
+    def __init__(self, options):
+        self.options = options
+        self.on_cue_sheet_written = None
+        self.album = album.Album()
+        self.methods = []
+        self.methods.append(Generic(self.album))
+        self.methods.append(Simple(self.album))
+
+    def extract(self):
+        album = Album()
+        file = open("montreux.txt")
+        for line in file.readlines():
+            parse(line)
+        album.do_print()
+
+    def parse(self, files, content):
+        for method in self.methods:
+            for file in files:
+                method.read(file, content)
+
+            if len(self.album.disc(1).tracks) != 0:
+                break
+
+    def write_cue_sheets(self):
+        for disc in self.album.discs.values():
+            print 'content_root %s' % disc.content_root
+            cue_filename = os.path.join(disc.content_root, 'disc%d.cue' % disc.number)
+
+            if not os.path.exists(cue_filename) or self.options.overwrite:
+                print 'writing cue file for disc #%i to %s' % (disc.number, cue_filename)
+                file = open(cue_filename, 'w')
+                self.write_cue_sheet_(file, disc)
+                file.close()
+                if(self.on_cue_sheet_written):
+                    self.on_cue_sheet_written(cue_filename)
+            else:
+                print 'writing cue file for disc #%i to %s (skipping, exists)' % (disc.number, cue_filename)
+
+    def write_cue_sheet_(self, file, disc):
+        file.write('PERFORMER ""\n')
+        file.write('TITLE ""\n')
+        file.write('YEAR ""\n')
+        file.write('DISC "%d"\n' % disc.number)
+        file.write('COMMENT "LAME 3.97 (--preset standard)"\n')
+        file.write('\n')
+        for track in disc.tracks.values():
+            track.title = " ".join([ word.capitalize() for word in track.title.split() ])
+            #file.write('TRACK %s AUDIO\n' % track.number)
+            file.write('TRACK %s\n' % track.number)
+            file.write('  TITLE "%s"\n' % track.title)
+            #file.write('  FILE "%s" FLAC\n' % track.filename)
+            file.write('  FILE "%s"\n' % track.filename)
+            #file.write('  CHECKSUM "%s"\n' % track.checksum)
+
 
