@@ -40,6 +40,8 @@
 
 ;;; Code:
 
+;; (global-set-key [f5] 'eval-buffer)
+
 (defvar xsh-marker-regexp
   ;; This used to use path-separator instead of ":";
   ;; however, we found that on both Windows 32 and MSDOS
@@ -76,16 +78,13 @@
        ;; Set the accumulator to the remaining text.
        xsh-marker-acc (substring xsh-marker-acc (match-end 0))))
 
-    ;; Check for annotations and change gud-minor-mode to 'gdba if
-    ;; they are found.
     (while (string-match "\n\032\032\\(.*\\)\n" xsh-marker-acc)
       (let ((match (match-string 1 xsh-marker-acc)))
 
 	;; Pick up stopped annotation if attaching to process.
-	(if (string-equal match "stopped") (setq gdb-active-process t))
+	(if (string-equal match "stopped") (setq xsh-active-process t))
 
-	;; Using annotations, switch to gud-gdba-marker-filter.
-	(when (string-equal match "prompt")
+	(when (string-equal match "completions")
 	  (comint-dynamic-list-completions
 	   (split-string (substring xsh-marker-acc 0 (match-beginning 0)))))
 
@@ -129,12 +128,14 @@
   (interactive)
   (setq buffer (get-buffer-create (or buffer "*shell*")))
   (pop-to-buffer buffer)
-  (make-comint-in-buffer "name" "*shell*" "/home/epronk/annotation/proto.py"))
+  (make-comint-in-buffer "name" "*shell*" "/home/epronk/annotation/proto.py")
+  ;(set-process-filter (get-buffer-process buffer) 'xsh-marker-filter)
+  )
 
 (xsh-marker-filter "foo
-pre-prompt
+pre-completions
 foobar
 foobaz
 fooman
-prompt
+completions
 ")
