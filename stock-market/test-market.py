@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 class Order :
@@ -13,9 +14,13 @@ class Trade :
 class OrderQueue :
     def __init__(self):
         self.levels = {}
+        self.orders = {}
         self.subscribers = []
 
-    def add(self, order):
+    def add(self, order, id):
+        order.id = id
+        self.orders[id] = copy.copy(order)
+        #self.orders[id] = order
         if self.levels.has_key(order.price):
             level = self.queue[order.price]
         else:
@@ -28,6 +33,20 @@ class OrderQueue :
         level.orders.append(order)
         #self.sell_queue.add(order)
 
+    def amend(self, order):
+        old_order = self.orders[order.id]
+        level = self.levels[old_order.price]
+        if order.price != old_order.price:
+            for xorder in level.orders:
+                if xorder.id == order.id:
+                    xorder.price = order.price
+                    level.orders.remove(xorder)
+                    if len(level.orders) == 0:
+                        del self.levels[old_order.price]
+                        for subscriber in self.subscribers:
+                            subscriber.on_price_level_removed(order.price)
+                    self.add(xorder, order.id)
+
     def remove(self, price, id):
         level = self.levels[price]
         for order in level.orders:
@@ -35,6 +54,7 @@ class OrderQueue :
                 level.orders.remove(order)
 
         if len(level.orders) == 0:
+            del self.levels[price]
             for subscriber in self.subscribers:
                 subscriber.on_price_level_removed(order.price)
 
@@ -56,38 +76,58 @@ class Level :
 
 class Market :
     def __init__(self):
-        self.order_id = 1;
-        self.sell_queue = SellOrderQueue();
-        self.buy_queue = BuyOrderQueue();
+        self.order_id = 1
+        self.sell_queue = SellOrderQueue()
+        self.buy_queue = BuyOrderQueue()
         self.trade_subscribers = []
         self.order_subscribers = []
 
     def new_sell_order(self, order):
         order.side = 'Sell'
-        order.id = self.order_id
         self.order_id += 1
         for subscriber in self.order_subscribers:
             subscriber.on_order_added(order)
-        self.sell_queue.add(order)
+        self.sell_queue.add(order, self.order_id)
         self.match()
 
     def new_buy_order(self, order):
         order.side = 'Buy'
-        order.id = self.order_id
         self.order_id += 1
         for subscriber in self.order_subscribers:
             subscriber.on_order_added(order)
-        self.buy_queue.add(order)
+        self.buy_queue.add(order, self.order_id)
         self.match()
 
-    def reduce(self, order, quantity):
+    def amend_order(self, order):
+        if order.side == 'Buy':
+            self.buy_queue.amend(order)
+        else:
+            self.sell_queue.amend(order)
+        self.match()
+
+    def reduce(self, queue, order, quantity):
         order.quantity -= quantity
         if order.quantity == 0:
             for subscriber in self.order_subscribers:
                 subscriber.on_order_removed(order)
+            queue.remove(order.price, order.id)
         else:
             for subscriber in self.order_subscribers:
                 subscriber.on_order_changed(order)
+
+    def dump(self):
+        print 'market:'
+        print 'sell: best price = %s' % self.sell_queue.best_price()
+        for level, v in self.sell_queue.levels.iteritems():
+            print 'level %s' % level
+            for i in v.orders:
+                print i.__dict__
+        print 'buy: best price = %s' % self.buy_queue.best_price()
+        for level,v in self.buy_queue.levels.iteritems():
+            print 'level %s' % level
+            for i in v.orders:
+                print i.__dict__
+
 
     def match(self):
         if self.buy_queue.levels and self.sell_queue.levels:
@@ -96,8 +136,8 @@ class Market :
             sell_order = self.sell_queue.best_price_level().orders[0]
             quantity=  min(sell_order.quantity, buy_order.quantity)
             if buy_order.price >= sell_order.price:
-                self.reduce(buy_order, quantity)
-                self.reduce(sell_order, quantity)
+                self.reduce(self.buy_queue, buy_order, quantity)
+                self.reduce(self.sell_queue, sell_order, quantity)
                 for subscriber in self.trade_subscribers:
                     subscriber.on_trade(trade)
 
@@ -113,6 +153,9 @@ class Exchange :
 
     def new_buy_order(self, order):
         return self.market.new_buy_order(order)
+
+    def amend_order(self, order):
+        return self.market.amend_order(order)
 
 
 class Trades:
@@ -153,7 +196,7 @@ class TestOrderQueue(unittest.TestCase):
     def testBest(self):
         order = Order(code='BHP', price=49, quantity=10)
         order.id = 5
-        self.queue.add(order)
+        self.queue.add(order, order.id)
         self.queue.remove(order.price, 5)
 
 class TestBidOrderQueue(unittest.TestCase):
@@ -165,8 +208,8 @@ class TestBidOrderQueue(unittest.TestCase):
         print price
 
     def testBest(self):
-        order_id1 = self.queue.add(Order(code='BHP', price=49, quantity=10))
-        order_id1 = self.queue.add(Order(code='BHP', price=48, quantity=10))
+        order_id1 = self.queue.add(Order(code='BHP', price=49, quantity=10), id=1)
+        order_id1 = self.queue.add(Order(code='BHP', price=48, quantity=10), id=2)
         self.assertEqual(self.queue.best_price(), 49)
 
 class TestOfferOrderQueue(unittest.TestCase):
@@ -178,8 +221,8 @@ class TestOfferOrderQueue(unittest.TestCase):
         print price
 
     def testBest(self):
-        order_id1 = self.queue.add(Order(code='BHP', price=52, quantity=10))
-        order_id1 = self.queue.add(Order(code='BHP', price=51, quantity=10))
+        order_id1 = self.queue.add(Order(code='BHP', price=52, quantity=10), id=1)
+        order_id1 = self.queue.add(Order(code='BHP', price=51, quantity=10), id=2)
         self.assertEqual(self.queue.best_price(), 51)
 
 class TestMarket(unittest.TestCase):
@@ -207,6 +250,21 @@ class TestMarket(unittest.TestCase):
         order_id1 = self.connection.new_sell_order(Order(code='BHP', price=50, quantity=10))
         order_id2 = self.connection.new_buy_order(Order(code='BHP', price=50, quantity=5))
         self.assertEqual(len(self.trades.trades), 1)
+        self.assertEqual(len(self.connection.market.buy_queue.levels), 0)
+        self.assertEqual(len(self.connection.market.sell_queue.levels), 1)
+
+    def testTickUp(self):
+        order_id1 = self.connection.new_sell_order(Order(code='BHP', price=50, quantity=10))
+        buy_order = Order(code='BHP', price=49, quantity=5)
+        order_id2 = self.connection.new_buy_order(buy_order)
+        self.assertEqual(len(self.trades.trades), 0)
+        buy_order.price=50
+        self.connection.amend_order(buy_order)
+        self.assertEqual(len(self.trades.trades), 1)
+        #self.connection.market.dump()
+        
+        #self.assertEqual(len(self.connection.market.buy_queue.levels), 0)
+        #self.assertEqual(len(self.connection.market.sell_queue.levels), 1)
 
 if __name__ == '__main__':
     unittest.main()
