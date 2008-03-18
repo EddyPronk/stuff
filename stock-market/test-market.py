@@ -1,11 +1,14 @@
+# 20080316 2h
+# 20080317 3h
+
 import copy
 import unittest
 
 class Order :
-    def __init__(self, code, price, quantity):
+    def __init__(self, side, code, price, quantity):
+        self.side = side
         self.price = price
         self.quantity = quantity
-        pass
 
 class Trade :
     def __init__(self):
@@ -22,7 +25,7 @@ class OrderQueue :
         self.orders[id] = copy.copy(order)
         #self.orders[id] = order
         if self.levels.has_key(order.price):
-            level = self.queue[order.price]
+            level = self.levels[order.price]
         else:
             level = Level()
             self.levels[order.price] = level
@@ -74,29 +77,38 @@ class Level :
     def __init__(self):
         self.orders = []
 
+def sell_order(code="BHP", price=50, quantity=100):
+    return Order('Sell', code, price, quantity)
+
+def buy_order(code="BHP", price=50, quantity=100):
+    return Order('Buy', code, price, quantity)
+    
 class Market :
     def __init__(self):
-        self.order_id = 1
+        self.order_id = 0
         self.sell_queue = SellOrderQueue()
         self.buy_queue = BuyOrderQueue()
         self.trade_subscribers = []
         self.order_subscribers = []
 
-    def new_sell_order(self, order):
-        order.side = 'Sell'
+    def place_order(self, order):
         self.order_id += 1
-        for subscriber in self.order_subscribers:
-            subscriber.on_order_added(order)
-        self.sell_queue.add(order, self.order_id)
+        #for subscriber in self.order_subscribers:
+        #    subscriber.on_order_added(order)
+        if order.side == 'Buy':
+            self.buy_queue.add(order, self.order_id)
+        else:
+            self.sell_queue.add(order, self.order_id)
         self.match()
+        return self.order_id
 
     def new_buy_order(self, order):
-        order.side = 'Buy'
         self.order_id += 1
         for subscriber in self.order_subscribers:
             subscriber.on_order_added(order)
         self.buy_queue.add(order, self.order_id)
         self.match()
+        return self.order_id
 
     def amend_order(self, order):
         if order.side == 'Buy':
@@ -117,12 +129,16 @@ class Market :
 
     def dump(self):
         print 'market:'
-        print 'sell: best price = %s' % self.sell_queue.best_price()
+        print 'sell:'
+        if self.sell_queue.levels:
+            print 'best price = %s' % self.sell_queue.best_price()
         for level, v in self.sell_queue.levels.iteritems():
             print 'level %s' % level
             for i in v.orders:
                 print i.__dict__
-        print 'buy: best price = %s' % self.buy_queue.best_price()
+        print 'buy:'
+        if self.buy_queue.levels:
+            print 'best price = %s' % self.buy_queue.best_price()
         for level,v in self.buy_queue.levels.iteritems():
             print 'level %s' % level
             for i in v.orders:
@@ -140,6 +156,7 @@ class Market :
                 self.reduce(self.sell_queue, sell_order, quantity)
                 for subscriber in self.trade_subscribers:
                     subscriber.on_trade(trade)
+                self.match()
 
 class Exchange :
     def __init__(self):
@@ -148,11 +165,8 @@ class Exchange :
     def login(self):
         return self
 
-    def new_sell_order(self, order):
-        return self.market.new_sell_order(order)
-
-    def new_buy_order(self, order):
-        return self.market.new_buy_order(order)
+    def place_order(self, order):
+        return self.market.place_order(order)
 
     def amend_order(self, order):
         return self.market.amend_order(order)
@@ -194,7 +208,7 @@ class TestOrderQueue(unittest.TestCase):
     def on_price_level_removed(self, price) : pass
 
     def testBest(self):
-        order = Order(code='BHP', price=49, quantity=10)
+        order = buy_order(code='BHP', price=49, quantity=10)
         order.id = 5
         self.queue.add(order, order.id)
         self.queue.remove(order.price, 5)
@@ -208,8 +222,8 @@ class TestBidOrderQueue(unittest.TestCase):
         print price
 
     def testBest(self):
-        order_id1 = self.queue.add(Order(code='BHP', price=49, quantity=10), id=1)
-        order_id1 = self.queue.add(Order(code='BHP', price=48, quantity=10), id=2)
+        order_id1 = self.queue.add(sell_order(price=49, quantity=10), id=1)
+        order_id1 = self.queue.add(sell_order(price=49, quantity=10), id=2)
         self.assertEqual(self.queue.best_price(), 49)
 
 class TestOfferOrderQueue(unittest.TestCase):
@@ -221,15 +235,12 @@ class TestOfferOrderQueue(unittest.TestCase):
         print price
 
     def testBest(self):
-        order_id1 = self.queue.add(Order(code='BHP', price=52, quantity=10), id=1)
-        order_id1 = self.queue.add(Order(code='BHP', price=51, quantity=10), id=2)
+        order_id1 = self.queue.add(buy_order(price=52, quantity=10), id=1)
+        order_id1 = self.queue.add(buy_order(price=51, quantity=10), id=2)
         self.assertEqual(self.queue.best_price(), 51)
 
 class TestMarket(unittest.TestCase):
     
-    #    self.assert_(element in self.seq)
-    #    self.assertEqual(self.seq, range(10))
-
     def setUp(self):
         self.asx = Exchange()
         self.connection = self.asx.login()
@@ -242,29 +253,46 @@ class TestMarket(unittest.TestCase):
         self.asx.market.trade_subscribers.append(self.trades)
 
     def testNoMatch(self):
-        order_id1 = self.connection.new_sell_order(Order(code='BHP', price=50, quantity=10))
-        order_id2 = self.connection.new_buy_order(Order(code='BHP', price=49, quantity=5))
+        order_id1 = self.connection.place_order(sell_order(price=50, quantity=10))
+        order_id2 = self.connection.place_order(buy_order(price=49, quantity=5))
         self.assertEqual(len(self.trades.trades), 0)
 
     def testMatch(self):
-        order_id1 = self.connection.new_sell_order(Order(code='BHP', price=50, quantity=10))
-        order_id2 = self.connection.new_buy_order(Order(code='BHP', price=50, quantity=5))
+        order_id1 = self.connection.place_order(sell_order(price=50, quantity=10))
+        order_id2 = self.connection.place_order(buy_order(price=50, quantity=5))
         self.assertEqual(len(self.trades.trades), 1)
         self.assertEqual(len(self.connection.market.buy_queue.levels), 0)
         self.assertEqual(len(self.connection.market.sell_queue.levels), 1)
 
+    def testMatch2(self):
+        order_id1 = self.connection.place_order(sell_order(price=50, quantity=5))
+        order_id2 = self.connection.place_order(sell_order(price=50, quantity=5))
+        order_id3 = self.connection.place_order(buy_order(price=50, quantity=10))
+        self.assertEqual(len(self.trades.trades), 2)
+
     def testTickUp(self):
-        order_id1 = self.connection.new_sell_order(Order(code='BHP', price=50, quantity=10))
-        buy_order = Order(code='BHP', price=49, quantity=5)
-        order_id2 = self.connection.new_buy_order(buy_order)
+        order_id1 = self.connection.place_order(sell_order( price=50, quantity=10))
+        buy_order1 = buy_order( price=49, quantity=5)
+        order_id2 = self.connection.place_order(buy_order1)
         self.assertEqual(len(self.trades.trades), 0)
-        buy_order.price=50
-        self.connection.amend_order(buy_order)
+        buy_order1.price=50
+        self.connection.amend_order(buy_order1)
         self.assertEqual(len(self.trades.trades), 1)
         #self.connection.market.dump()
         
         #self.assertEqual(len(self.connection.market.buy_queue.levels), 0)
         #self.assertEqual(len(self.connection.market.sell_queue.levels), 1)
+
+    def testTickUp2(self):
+        self.connection.place_order(sell_order(price=50, quantity=10))
+        self.connection.place_order(buy_order(price=49, quantity=10))
+        buy_order1 = buy_order(price=49, quantity=15)
+        order_id2 = self.connection.place_order(buy_order1)
+        self.assertEqual(len(self.trades.trades), 0)
+        buy_order1.price=50
+        self.connection.amend_order(buy_order1)
+        self.assertEqual(len(self.trades.trades), 1)
+        #self.connection.market.dump()
 
 if __name__ == '__main__':
     unittest.main()
