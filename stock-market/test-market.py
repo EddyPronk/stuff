@@ -86,6 +86,7 @@ def buy_order(code="BHP", price=50, quantity=100):
 class Market :
     def __init__(self):
         self.order_id = 0
+        self.state = 'Open'
         self.sell_queue = SellOrderQueue()
         self.buy_queue = BuyOrderQueue()
         self.trade_subscribers = []
@@ -102,13 +103,12 @@ class Market :
         self.match()
         return self.order_id
 
-    def new_buy_order(self, order):
-        self.order_id += 1
-        for subscriber in self.order_subscribers:
-            subscriber.on_order_added(order)
-        self.buy_queue.add(order, self.order_id)
+    def set_state(self, state):
+        self.state = state
         self.match()
-        return self.order_id
+
+    def cancel_order(self, order):
+        pass
 
     def amend_order(self, order):
         if order.side == 'Buy':
@@ -146,6 +146,9 @@ class Market :
 
 
     def match(self):
+        if self.state != 'Open':
+            return
+
         if self.buy_queue.levels and self.sell_queue.levels:
             trade = Trade()
             buy_order = self.buy_queue.best_price_level().orders[0]
@@ -170,6 +173,9 @@ class Exchange :
 
     def amend_order(self, order):
         return self.market.amend_order(order)
+
+    def cancel_order(self, order):
+        return self.market.cancel_order(order)
 
 
 class Trades:
@@ -252,6 +258,10 @@ class TestMarket(unittest.TestCase):
         #self.asx.market.order_subscribers.append(self.orders)
         self.asx.market.trade_subscribers.append(self.trades)
 
+    def testCancel(self):
+        order_id1 = self.connection.place_order(sell_order(price=50, quantity=10))
+        self.connection.cancel_order(order_id1)
+
     def testNoMatch(self):
         order_id1 = self.connection.place_order(sell_order(price=50, quantity=10))
         order_id2 = self.connection.place_order(buy_order(price=49, quantity=5))
@@ -293,6 +303,17 @@ class TestMarket(unittest.TestCase):
         self.connection.amend_order(buy_order1)
         self.assertEqual(len(self.trades.trades), 1)
         #self.connection.market.dump()
+
+    def testOpeningRotation(self):
+        market = self.connection.market
+        market.set_state('Closed')
+        order_id1 = self.connection.place_order(sell_order(price=50, quantity=5))
+        order_id2 = self.connection.place_order(sell_order(price=50, quantity=5))
+        order_id3 = self.connection.place_order(buy_order(price=50, quantity=5))
+        order_id3 = self.connection.place_order(buy_order(price=50, quantity=5))
+        self.assertEqual(len(self.trades.trades), 0)
+        market.set_state('Open')
+        self.assertEqual(len(self.trades.trades), 2)
 
 if __name__ == '__main__':
     unittest.main()
