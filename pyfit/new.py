@@ -108,40 +108,6 @@ def write_html(os, table):
     os.write('</table>')
 
     
-class MethodCall(object):
-    def __init__(self, name):
-        self.name = name
-    def apply(self, fixture, cell):
-        print 'apply method call'
-        print 'name %s' % self.name
-        print 'value %s' % cell.data
-
-        f = getattr(fixture, self.name)
-        actual = f()
-        print 'actual: %s' % actual
-        print type(actual)
-        print type(cell.data)
-        if type(actual)(cell.data) == actual:
-            cell.passed()
-        else:
-            cell.expected(actual)
-
-class SetAttribute(object):
-    def __init__(self, name):
-        self.name = name
-    def apply(self, fixture, cell):
-        print 'apply set attribute'
-        print 'value %s' % cell.data
-        setattr(fixture, self.name, type(getattr(fixture, self.name))(cell.data))
-
-def parse_action(action_desc):
-    res = re.search('(.*)\(\)', action_desc)
-    if res is not None:
-        # funcion_call
-        action_name = res.group(1)
-        return MethodCall(res.group(1))
-    else:
-       return SetAttribute(action_desc)
 
 class CalculateDiscountEngine(object):
     def __init__(self):
@@ -165,8 +131,6 @@ class CalculateDiscountEngine(object):
 
         return 
 
-class ColumnFixture(object):
-    pass
 
 class CalculateDiscount(ColumnFixture):
 
@@ -181,9 +145,6 @@ class CalculateDiscount(ColumnFixture):
         else:
             return self.amount*0.05;
 
-def CreateFixture(name):
-    object = globals()[name]()
-    return object
 
 def CreateFixtureEngine(name, table):
     object = globals()[str(name) + 'Engine']()

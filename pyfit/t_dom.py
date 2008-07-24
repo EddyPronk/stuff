@@ -1,5 +1,7 @@
 import unittest
 from xml.dom import minidom, Node
+import re
+import sys
 
 class Cell(object):
     def __init__(self, data):
@@ -76,9 +78,6 @@ class Row(object):
     def __iter__(self):
         return RowDomIter(self.data.childNodes[0])
 
-def Parse(string):
-    return minidom.parseString(string)
-
 class Table(object):
     def __init__(self, data):
         self.doc = minidom.parseString(data)
@@ -91,11 +90,63 @@ class Table(object):
                     yield Row(row)
         return row_iter(self.data.childNodes)
 
-def get_next_cells(c, n):
-    result = []
-    for i in range(0, n):
-        result.append(str(c.next()))
-    return result
+class MethodCall(object):
+    def __init__(self, name):
+        self.name = name
+    def apply(self, fixture, cell):
+        f = getattr(fixture, self.name)
+        actual = f()
+        if type(actual)(str(cell)) == actual:
+            cell.passed()
+        else:
+            cell.failed(actual)
+
+class SetAttribute(object):
+    def __init__(self, name):
+        self.name = name
+    def apply(self, fixture, cell):
+        setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
+
+def parse_action(action_desc):
+    res = re.search('(.*)\(\)', action_desc)
+    if res is not None:
+        # funcion_call
+        action_name = res.group(1)
+        return MethodCall(res.group(1))
+    else:
+       return SetAttribute(action_desc)
+
+class ColumnFixture(object):
+    def process(self, table):
+        rows = table.rows()
+        row = rows.next()
+        row = rows.next()
+
+        desc = []
+        for cell in row:
+            desc.append(parse_action(str(cell)))
+
+        for row in rows:
+            for (d, cell) in zip(desc, row):
+                d.apply(self, cell)
+
+
+class CalculateDiscount(ColumnFixture):
+
+    amount = 0.0
+
+    def discount(self):
+        if (self.amount < 0):
+            pass
+            #throw new RuntimeException("Can't be a negative amount");
+        if (self.amount < 1000):
+            return 0.0
+        else:
+            return self.amount*0.05;
+
+def CreateFixture(name):
+    object = globals()[name]()
+    return object
 
 class TestNew(unittest.TestCase):
 
@@ -191,6 +242,27 @@ class TestNew(unittest.TestCase):
         for cell in it:
             self.assertEqual('add', str(cell))
             self.assertEqual(['arg1', 'arg2'], it.get(2))
+
+    def test_fixture(self):
+        html = '<table>' \
+            '<tr><td>CalculateDiscount</td></tr>' \
+            '<tr><td>amount</td><td>discount()</td></tr>' \
+            '<tr><td>1</td><td>4</td></tr>' \
+            '<tr><td>2</td><td>5</td></tr>' \
+            '<tr><td>3</td><td>6</td></tr>' \
+            '</table>'
+
+        table = Table(html)
+        rows = table.rows()
+        row = rows.next()
+        it = RowIter(iter(row))
+        name = it.next() 
+
+        fixture = CreateFixture(str(name))
+        fixture.process(table)
+
+        self.assertEqual('CalculateDiscount', str(name))
+        print table.doc.toxml()
 
 if __name__ == '__main__':
     unittest.main()
