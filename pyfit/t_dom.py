@@ -1,51 +1,17 @@
 import unittest
 from xml.dom import minidom, Node
 
-input = '''<table border="1" cellspacing="0">
-<tr><td colspan="2">CalculateDiscount</td>
-</tr>
-<tr><td><i>amount</i></td>
-<td><i>discount()</i></td>
-</tr>
-<tr><td>0.00</td>
-<td>0.00</td>
-</tr>
-<tr><td>100.00</td>
-<td>0.00</td>
-</tr>
-<tr><td>999.00</td>
-<td>0.00</td>
-</tr>
-<tr><td>1000.00</td>
-<td>0.00</td>
-</tr>
-<tr><td>1010.00</td>
-<td>50.50</td>
-</tr>
-<tr><td>1100.00</td>
-<td>55.00</td>
-</tr>
-<tr><td>1200.00</td>
-<td>60.00</td>
-</tr>
-<tr><td>2000.00</td>
-<td>100.00</td>
-</tr>
-</table>'''
-
-def deepest(node):
-    if node is not None:
-        if node.hasChildNodes():
-            return deepest(node.childNodes[0])
-        else:
-            return node
-
-
 class Cell(object):
     def __init__(self, data):
         self.data = data
 
     def __str__(self):
+        def deepest(node):
+            if node is not None:
+                if node.hasChildNodes():
+                    return deepest(node.childNodes[0])
+                else:
+                    return node
         return deepest(self.data).nodeValue
 
     def passed(self):
@@ -68,21 +34,16 @@ class Cell(object):
         self.data.insertBefore(value, self.data.childNodes[0])
         self.data.appendChild(actual)
 
-#    def cells(self):
-#        def cell_iter(row):
-#            for col in row.childNodes:
-#                if col.nodeType == Node.ELEMENT_NODE:
-#                    e = deepest(col.childNodes[0])
-                    #yield e.nodeValue
-#                    yield Cell(e)
-
-        return cell_iter(self.data)
-
-class RowIter(object):
+class RowDomIter(object):
     def __init__(self, data):
         self.data = data
     def __iter__(self):
         return self
+    def getn(self, n):
+        result = []
+        for i in range(0, n):
+            result.append(str(it.next()))
+        return result
     def next(self):
         if self.data is None:
             raise StopIteration
@@ -95,26 +56,25 @@ class RowIter(object):
             self.data = None
         return cell
 
-#            if self.data.nextSibling.nodeType == Node.ELEMENT_NODE:
-
-#        if self.data == None:
-#            raise StopIteration
-
-#        result = self.data
-#    def getn(self, n):
-#        result = []
-#        for i in range(0, n):
-#            result.append(str(it.next()))
-#        return result
-
-#        return self.it.next()
+class RowIter(object):
+    def __init__(self, iter):
+        self.iter = iter
+    def __iter__(self):
+        return self
+    def next(self):
+        return self.iter.next()
+    def get(self, n):
+        result = []
+        for i in range(0, n):
+            result.append(str(self.next()))
+        return result
 
 class Row(object):
     def __init__(self, data):
         self.data = data
 
     def __iter__(self):
-        return RowIter(self.data.childNodes[0])
+        return RowDomIter(self.data.childNodes[0])
 
 def Parse(string):
     return minidom.parseString(string)
@@ -154,36 +114,21 @@ class TestNew(unittest.TestCase):
         f(*args)
         self.assert_(fixture.called)
 
-    def testSimpleTable(self):
-        html = '<table>' \
-            '<tr><td><a href="FooBar">FooBar</a></td>' \
-            '<td>1</td>' \
-            '<td>2</td>' \
-            '<td>Baz</td>' \
-            '<td>3</td>' \
-            '</tr>' \
-            '</table>'
-
-        table = Table(html)
-        row = iter(table.rows()).next()
-        col = iter(row).next()
-
-        n = 0
-        for cell in row:
-            n += 1
-
-        self.assertEqual(n, 5)
-        self.assertEqual('FooBar', str(col.next()))        
-        self.assertEqual(['1','2'], get_next_cells(col, 2))
-        self.assertEqual('Baz', str(col.next()))        
-        self.assertEqual(['3'], get_next_cells(col, 1))
-
     def test_iterator_can_get_first(self):
         html = '<table><tr><td>50.0</td></tr></table>'
         table = Table(html)
         for row in table.rows():
             it = iter(row)
             self.assertEqual(str(it.next()), "50.0")
+
+    def test_iterator_can_get_first_text(self):
+        html = '<table><tr><td><i>amount</i></td></tr></table>'
+        table = Table(html)
+        for row in table.rows():
+            it = iter(row)
+            self.assertEqual(str(it.next()), "amount")
+    def test_iterator_can_get_first(self):
+        html = '<td><i>amount</i></td>'
 
     def test_iterator_can_get_second(self):
         html = '<table><tr><td>50.0</td><td>52.0</td></tr></table>'
@@ -193,7 +138,7 @@ class TestNew(unittest.TestCase):
             it.next()
             self.assertEqual(str(it.next()), "52.0")
 
-    def test_iterator_can_get_second2(self):
+    def test_iterator_can_get_second_with_extra_text_node(self):
         html = '<table><tr><td>50.0</td>ignore<td>52.0</td></tr></table>'
         table = Table(html)
         for row in table.rows():
@@ -208,64 +153,44 @@ class TestNew(unittest.TestCase):
             for cell in row:
                 pass
 
-    #def testCanIterateOverTable(self):
-    #    html = '<table><tr><td>50.0</td></tr></table>'
-    #    table = Table(html)
-    #    for row in table.rows():
-    #        for col in row:
-    #            self.assertEqual(str(col), "50.0")
-
-    def testCellCanPass(self):
+    def test_can_iterate_over_table(self):
         html = '<table><tr><td>50.0</td></tr></table>'
         table = Table(html)
-        #row = iter(table.rows()).next()
-        #col = iter(row).next()
-        #col.passed()
-        #self.assertEqual('<td class="pass">50.0</td>', col.data.toxml())
+        for row in table.rows():
+            for col in row:
+                self.assertEqual(str(col), "50.0")
 
-    def testCellCanFail(self):
+    def test_cell_can_pass(self):
         html = '<table><tr><td>50.0</td></tr></table>'
         table = Table(html)
-        
-        #col.failed(49.5)
-        #self.assertEqual('<td>49.5<span class="fit_label">expected</span><hr>50.0</hr>'
-        #                 '<span class="fit_label">actual</span></td>', col.data.toxml())
+        row = iter(table.rows()).next()
+        col = iter(row).next()
+        col.passed()
+        self.assertEqual('<td class="pass">50.0</td>', col.data.toxml())
 
-    def testSimpleTable(self):
+    def test_cell_can_fail(self):
+        html = '<table><tr><td>50.0</td></tr></table>'
+        table = Table(html)
+        row = iter(table.rows()).next()
+        col = iter(row).next()
+        col.failed(49.5)
+        self.assertEqual('<td>49.5<span class="fit_label">expected</span><hr>50.0</hr>'
+                         '<span class="fit_label">actual</span></td>', col.data.toxml())
+
+    def test_iterator_can_get_n_fields(self):
         html = '<table>' \
-            '<tr><td>user</td>' \
-            '<td>anna</td>' \
-            '<td>room</td>' \
-            '<td>lotr</td>' \
+            '<tr><td>add</td>' \
+            '<td>arg1</td>' \
+            '<td>arg2</td>' \
             '</tr>' \
             '</table>'
 
-        class RowReader(object):
-            def __init__(self, row):
-                self.data = iter(row)
-                self.eof_state = False
-            def read(self):
-                try:
-                    value = self.data.next()
-                    return value
-                except StopIteration:
-                    self.eof_state = True
-            def readcells(self, n):
-                result = []
-                for i in range(0, n):
-                    result.append(str(self.read()))
-                return result
-                    
-            def eof(self):
-                return self.eof_state
-
         table = Table(html)
-        for row in table.rows():
-            pass
-            #it = my_iter(row)
-            #for cell in it:
-            #    print cell
-            #    print it.getn(2)
+        row = iter(table.rows()).next()
+        it = RowIter(iter(row))
+        for cell in it:
+            self.assertEqual('add', str(cell))
+            self.assertEqual(['arg1', 'arg2'], it.get(2))
 
 if __name__ == '__main__':
     unittest.main()
