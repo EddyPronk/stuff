@@ -3,134 +3,7 @@ from xml.dom import minidom, Node
 import re
 import sys
 import inspect
-
-class Cell(object):
-    def __init__(self, data):
-        self.data = data
-
-    def __str__(self):
-        def deepest(node):
-            if node is not None:
-                if node.hasChildNodes():
-                    return deepest(node.childNodes[0])
-                else:
-                    return node
-        return deepest(self.data).nodeValue
-
-    def passed(self):
-        self.data.setAttribute("class", "pass")
-
-    def failed(self, actual_value):
-        expected_value = self.data.childNodes[0].nodeValue
-        doc = self.data.ownerDocument
-        expected = doc.createElement("span")
-        expected.appendChild(doc.createTextNode("expected"))
-        expected.setAttribute("class", "fit_label")
-        actual = doc.createElement("span")
-        actual.appendChild(doc.createTextNode("actual"))
-        actual.setAttribute("class", "fit_label")
-        hr = doc.createElement("hr")
-        hr.appendChild(doc.createTextNode(str(expected_value)))
-        self.data.replaceChild(hr, self.data.childNodes[0])
-        value = doc.createTextNode(str(actual_value))
-        self.data.insertBefore(expected, self.data.childNodes[0])
-        self.data.insertBefore(value, self.data.childNodes[0])
-        self.data.appendChild(actual)
-
-class RowDomIter(object):
-    def __init__(self, data):
-        self.data = data
-    def __iter__(self):
-        return self
-    def getn(self, n):
-        result = []
-        for i in range(0, n):
-            result.append(str(it.next()))
-        return result
-    def next(self):
-        if self.data is None:
-            raise StopIteration
-        cell = Cell(self.data)
-        if self.data.nextSibling is not None:
-            self.data = self.data.nextSibling
-            if self.data.nodeType != Node.ELEMENT_NODE:
-                return self.next()
-        else:
-            self.data = None
-        return cell
-
-class RowIter(object):
-    def __init__(self, iter):
-        self.iter = iter
-    def __iter__(self):
-        return self
-    def next(self):
-        return self.iter.next()
-    def get(self, n):
-        result = []
-        for i in range(0, n):
-            result.append(str(self.next()))
-        return result
-
-class Row(object):
-    def __init__(self, data):
-        self.data = data
-
-    def __iter__(self):
-        return RowDomIter(self.data.childNodes[0])
-
-class Table(object):
-    def __init__(self, data):
-        self.doc = minidom.parseString(data)
-        self.data = self.doc.childNodes[0]
-
-    def rows(self):
-        def row_iter(row):
-            for row in self.data.childNodes:
-                if row.nodeType == Node.ELEMENT_NODE:
-                    yield Row(row)
-        return row_iter(self.data.childNodes)
-
-class MethodCall(object):
-    def __init__(self, name):
-        self.name = name
-    def apply(self, fixture, cell):
-        f = getattr(fixture, self.name)
-        actual = f()
-        if type(actual)(str(cell)) == actual:
-            cell.passed()
-        else:
-            cell.failed(actual)
-
-class SetAttribute(object):
-    def __init__(self, name):
-        self.name = name
-    def apply(self, fixture, cell):
-        setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
-
-def parse_action(action_desc):
-    res = re.search('(.*)\(\)', action_desc)
-    if res is not None:
-        # funcion_call
-        action_name = res.group(1)
-        return MethodCall(res.group(1))
-    else:
-       return SetAttribute(action_desc)
-
-class ColumnFixture(object):
-    def process(self, table):
-        rows = table.rows()
-        row = rows.next()
-        row = rows.next()
-
-        desc = []
-        for cell in row:
-            desc.append(parse_action(str(cell)))
-
-        for row in rows:
-            for (d, cell) in zip(desc, row):
-                d.apply(self, cell)
-
+from fixtures import *
 
 class CalculateDiscount(ColumnFixture):
 
@@ -145,20 +18,6 @@ class CalculateDiscount(ColumnFixture):
         else:
             return self.amount*0.05;
 
-class ActionFixture(object):
-    def process(self, table):
-        rows = table.rows()
-        row = rows.next()
-
-        for row in rows:
-            cells = RowIter(iter(row))
-            for cell in cells:
-                cell = cells.next()
-                f = getattr(self, str(cell))
-        
-                nargs = len(inspect.getargspec(f)[0]) - 1
-                args = cells.get(nargs)
-                f(*args)
 
 class TestActionFixture(ActionFixture):
 
@@ -172,27 +31,8 @@ class TestActionFixture(ActionFixture):
     def add(self, x, y):
         self.trace.append(['add', 'x', x, 'y', y])
 
-class TestDoFixture(object):
-    def process(self, table):
-        rows = table.rows()
-        row = rows.next()
-
-        for row in rows:
-            cells = RowIter(iter(row))
-            name = ''
-            args = []
-            for cell in cells:
-                name += str(cell)
-                arg = ''
-                try:
-                    args.append(str(cells.next()))
-                except StopIteration:
-                    pass
-                if arg is not '':
-                    print arg
-            f = getattr(self, name)
-            f(*args)
             
+class TestDoFixture(DoFixture):
     trace = []
     def UserCreatesRoom(self, userName, roomName):
         self.trace.append(['UserCreatesRoom', "userName", userName, "roomName", roomName])
