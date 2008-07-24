@@ -2,6 +2,7 @@ import unittest
 from xml.dom import minidom, Node
 import re
 import sys
+import inspect
 
 class Cell(object):
     def __init__(self, data):
@@ -144,9 +145,60 @@ class CalculateDiscount(ColumnFixture):
         else:
             return self.amount*0.05;
 
-def CreateFixture(name):
-    object = globals()[name]()
-    return object
+class ActionFixture(object):
+    def process(self, table):
+        rows = table.rows()
+        row = rows.next()
+
+        for row in rows:
+            cells = RowIter(iter(row))
+            for cell in cells:
+                cell = cells.next()
+                f = getattr(self, str(cell))
+        
+                nargs = len(inspect.getargspec(f)[0]) - 1
+                args = cells.get(nargs)
+                f(*args)
+
+class TestActionFixture(ActionFixture):
+
+    trace = []
+    def amount(self, x):
+        self.trace.append(['amount', 'x', x])
+
+    def user(self, userName):
+        self.trace.append(['user', 'userName', userName])
+
+    def add(self, x, y):
+        self.trace.append(['add', 'x', x, 'y', y])
+
+class TestDoFixture(object):
+    def process(self, table):
+        rows = table.rows()
+        row = rows.next()
+
+        for row in rows:
+            cells = RowIter(iter(row))
+            name = ''
+            args = []
+            for cell in cells:
+                name += str(cell)
+                arg = ''
+                try:
+                    args.append(str(cells.next()))
+                except StopIteration:
+                    pass
+                if arg is not '':
+                    print arg
+            f = getattr(self, name)
+            f(*args)
+            
+    trace = []
+    def UserCreatesRoom(self, userName, roomName):
+        self.trace.append(['UserCreatesRoom', "userName", userName, "roomName", roomName])
+
+
+    
 
 class TestNew(unittest.TestCase):
 
@@ -158,7 +210,6 @@ class TestNew(unittest.TestCase):
         fixture = FooFixture()
         f = getattr(fixture, 'test_func')
         
-        import inspect
         self.assert_(inspect.ismethod(f))
         self.assertEqual(2, len(inspect.getargspec(f)[0]) - 1)
         args = [1, 2]
@@ -258,11 +309,57 @@ class TestNew(unittest.TestCase):
         it = RowIter(iter(row))
         name = it.next() 
 
+        def CreateFixture(name):
+            return globals()[name]()
+
         fixture = CreateFixture(str(name))
         fixture.process(table)
 
         self.assertEqual('CalculateDiscount', str(name))
-        print table.doc.toxml()
+        #print table.doc.toxml()
+
+    def test_action_fixture(self):
+        html = '<table>' \
+            '<tr><td>TestActionFixture</td></tr>' \
+            '<tr><td>enter</td><td>user</td><td>anna</td></tr>' \
+            '<tr><td>check</td><td>amount</td><td>24</td></tr>' \
+            '<tr><td>check</td><td>add</td><td>12</td><td>7</td></tr>' \
+            '</table>'
+
+        table = Table(html)
+        rows = table.rows()
+        row = rows.next()
+        it = RowIter(iter(row))
+        name = it.next() 
+
+        def CreateFixture(name):
+            return globals()[name]()
+
+        fixture = CreateFixture(str(name))
+        fixture.process(table)
+        self.assertEqual(fixture.trace[0], ['user', 'userName', 'anna'])
+        self.assertEqual(fixture.trace[1], ['amount', 'x', '24'])
+        self.assertEqual(fixture.trace[2], ['add', 'x', '12', 'y', '7'])
+
+    def test_do_fixture(self):
+        html = '<table>' \
+            '<tr><td>TestDoFixture</td></tr>' \
+            '<tr><td>User</td><td>anna</td><td>Creates</td><td>lotr</td><td>Room</td></tr>' \
+            '</table>'
+
+        table = Table(html)
+        rows = table.rows()
+        row = rows.next()
+        it = RowIter(iter(row))
+        name = it.next() 
+
+        def CreateFixture(name):
+            return globals()[name]()
+
+        fixture = CreateFixture(str(name))
+        fixture.process(table)
+        self.assertEqual(fixture.trace[0], ['UserCreatesRoom', 'userName', 'anna', 'roomName', 'lotr'])
+
 
 if __name__ == '__main__':
     unittest.main()
