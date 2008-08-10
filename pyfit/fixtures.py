@@ -50,3 +50,4 @@ class DoFixture(object):
                     pass
             f = getattr(self, name)
             f(*args)
+

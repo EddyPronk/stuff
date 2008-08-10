@@ -39,4 +39,15 @@ class FileAdapter(object):
 def format_10_digit_number(n):
     return "%010i" % n
 
+def wiki_table_to_html(table):
+    output = ''
+    for line in table.split('\n'):
+        row = line.lstrip().split('|')[1:-1]
+        if len(row):
+            output += "<tr>"
+            for cell in row:
+                output += "<td>%s</td>\n" % cell.lstrip().rstrip()
+            output += "</tr>\n"
+    return output
+
         

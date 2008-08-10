@@ -1,4 +1,5 @@
 from xml.dom import minidom, Node
+#from fixtures import *
 
 class Cell(object):
     def __init__(self, data):
@@ -27,9 +28,9 @@ class Cell(object):
         actual.appendChild(doc.createTextNode("actual"))
         actual.setAttribute("class", "fit_label")
         hr = doc.createElement("hr")
-        hr.appendChild(doc.createTextNode(str(expected_value)))
+        hr.appendChild(doc.createTextNode(str(expected_value) + ' '))
         self.data.replaceChild(hr, self.data.childNodes[0])
-        value = doc.createTextNode(str(actual_value))
+        value = doc.createTextNode(str(actual_value) + ' ')
         self.data.insertBefore(expected, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
         self.data.appendChild(actual)
@@ -81,8 +82,12 @@ class Row(object):
 
 class Table(object):
     def __init__(self, data):
-        self.doc = minidom.parseString(data)
-        self.data = self.doc.childNodes[0]
+        if type(data) is str:
+            self.doc = minidom.parseString(data)
+            self.data = self.doc.childNodes[0]
+        else:
+            self.data = data
+        
 
     def rows(self):
         def row_iter(row):
@@ -97,4 +102,26 @@ class Table(object):
         it = RowIter(iter(row))
         return str(it.next())
 
+class Document(object):
+    def __init__(self, data):
+        self.doc = minidom.parseString('<doc>\n' + data + '</doc>\n')
+        self.data = self.doc.childNodes[0]
+
+    def html(self):
+        html = ''
+        for node in self.data.childNodes:
+            html += node.toxml()
+        return html
+
+    def visit_tables(self):
+
+        for node in self.data.childNodes:
+            if node.nodeName == 'table':
+                table = Table(node)
+                name = table.name()
+                module = __import__(name)
+                class_ = getattr(module, name)
+                fixture = class_()
+                #fixture = x(
+                fixture.process(table)
 

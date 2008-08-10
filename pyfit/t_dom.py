@@ -4,21 +4,7 @@ import re
 import sys
 import inspect
 from fixtures import *
-
-class CalculateDiscount(ColumnFixture):
-
-    amount = 0.0
-
-    def discount(self):
-        if (self.amount < 0):
-            pass
-            #throw new RuntimeException("Can't be a negative amount");
-        if (self.amount < 1000):
-            return 0.0
-        else:
-            return self.amount*0.05;
-
-
+from testfixtures import *
 class TestActionFixture(ActionFixture):
 
     trace = []
@@ -134,7 +120,7 @@ class TestNew(unittest.TestCase):
         row = iter(table.rows()).next()
         col = iter(row).next()
         col.failed(49.5)
-        self.assertEqual('<td class="fail">49.5<span class="fit_label">expected</span><hr>50.0</hr>'
+        self.assertEqual('<td class="fail">49.5 <span class="fit_label">expected</span><hr>50.0 </hr>'
                          '<span class="fit_label">actual</span></td>', col.data.toxml())
 
     def test_iterator_can_get_n_fields(self):
@@ -232,6 +218,45 @@ class TestNew(unittest.TestCase):
         html = '<table><tr><td colspan="2">CalculateDiscount</td>\n</tr></table>'
         table = Table(html)
         self.assertEqual('CalculateDiscount', table.name())
+
+    def test_action_fixture(self):
+        html = '<table border="1" cellspacing="0">\n' \
+            '<tr><td colspan="2">CalculateDiscount</td>\n' \
+            '</tr>\n' \
+            '<tr><td><i>amount</i></td>\n' \
+            '<td><i>discount()</i></td>' \
+            '</tr>\n' \
+            '<tr><td>0.00</td>\n' \
+            '<td>0.00</td>\n' \
+            '</tr>\n' \
+            '</table>\n' \
+            '\n' \
+            '<table border="1" cellspacing="0">\n' \
+            '<tr><td colspan="2">CalculateDiscount</td>\n' \
+            '</tr>\n' \
+            '<tr><td><i>amount</i></td>\n' \
+            '<td><i>discount()</i></td>' \
+            '</tr>\n' \
+            '<tr><td>0.00</td>\n' \
+            '<td>0.00</td>\n' \
+            '</tr>\n' \
+            '</table>\n'
+
+        doc = Document(html)
+        doc.visit_tables()
+        html = doc.html()
+        #print html
+        
+    def test_market_picture(self):
+        table = '''
+            |market picture |prepare|BHP    |
+            |qty  |bid price|ask price|qty  |
+            |1,900|     82.0|83.0     |1,900|
+            |  500|     82.0|         |     |
+        '''
+        
+        doc = Document(wiki_table_to_html(table))
+        print doc.html()
 
 if __name__ == '__main__':
     unittest.main()
