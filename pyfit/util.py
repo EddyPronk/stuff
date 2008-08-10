@@ -24,3 +24,19 @@ def parse_action(action_desc):
         return MethodCall(res.group(1))
     else:
         return SetAttribute(action_desc)
+
+class FileAdapter(object):
+    def __init__(self):
+        self.data = ''
+    def read(self, n):
+        print 'read - n [%s]' % n
+        result = self.data[0:n]
+        #print 'read - result [%s]' % result
+        self.data = self.data[n:]
+        print 'read - rest [%s]' % self.data
+        return result
+
+def format_10_digit_number(n):
+    return "%010i" % n
+
+        

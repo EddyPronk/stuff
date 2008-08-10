@@ -134,32 +134,41 @@ class TestNew(unittest.TestCase):
         row = iter(table.rows()).next()
         col = iter(row).next()
         col.failed(49.5)
-        self.assertEqual('<td>49.5<span class="fit_label">expected</span><hr>50.0</hr>'
+        self.assertEqual('<td class="fail">49.5<span class="fit_label">expected</span><hr>50.0</hr>'
                          '<span class="fit_label">actual</span></td>', col.data.toxml())
 
     def test_iterator_can_get_n_fields(self):
         html = '<table>' \
             '<tr><td>add</td>' \
             '<td>arg1</td>' \
-            '<td>arg2</td>' \
+            '<td>arg2</td>\n' \
             '</tr>' \
             '</table>'
 
         table = Table(html)
         row = iter(table.rows()).next()
         it = RowIter(iter(row))
+        s = []
+        for cell in it:
+            s.append(str(cell))
+        self.assertEqual(['add', 'arg1', 'arg2'], s)
+        #print s
+        it = RowIter(iter(row))
         for cell in it:
             self.assertEqual('add', str(cell))
             self.assertEqual(['arg1', 'arg2'], it.get(2))
 
     def test_fixture(self):
-        html = '<table>' \
-            '<tr><td>CalculateDiscount</td></tr>' \
-            '<tr><td>amount</td><td>discount()</td></tr>' \
-            '<tr><td>1</td><td>4</td></tr>' \
-            '<tr><td>2</td><td>5</td></tr>' \
-            '<tr><td>3</td><td>6</td></tr>' \
-            '</table>'
+        html = '<table border="1" cellspacing="0">\n' \
+            '<tr><td colspan="2">CalculateDiscount</td>\n' \
+            '</tr>\n' \
+            '<tr><td><i>amount</i></td>\n' \
+            '<td><i>discount()</i></td>' \
+            '</tr>\n' \
+            '<tr><td>0.00</td>\n' \
+            '<td>0.00</td>\n' \
+            '</tr>\n' \
+            '</table>\n'
 
         table = Table(html)
         rows = table.rows()

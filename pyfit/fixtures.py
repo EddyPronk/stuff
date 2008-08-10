@@ -10,6 +10,7 @@ class ColumnFixture(object):
 
         desc = []
         for cell in row:
+            #print 'cell [%s]' % str(cell)
             desc.append(parse_action(str(cell)))
 
         for row in rows:

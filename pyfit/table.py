@@ -17,6 +17,7 @@ class Cell(object):
         self.data.setAttribute("class", "pass")
 
     def failed(self, actual_value):
+        self.data.setAttribute("class", "fail")
         expected_value = self.data.childNodes[0].nodeValue
         doc = self.data.ownerDocument
         expected = doc.createElement("span")
@@ -51,8 +52,11 @@ class RowDomIter(object):
             self.data = self.data.nextSibling
             while self.data.nextSibling is not None and self.data.nodeType != Node.ELEMENT_NODE:
                 self.data = self.data.nextSibling
+            if self.data.nodeName != 'td':
+                self.data = None
         else:
             self.data = None
+        #print cell.data.__dict__
         return cell
 
 class RowIter(object):
