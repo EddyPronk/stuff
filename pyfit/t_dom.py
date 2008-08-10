@@ -64,13 +64,31 @@ class TestNew(unittest.TestCase):
             self.assertEqual(str(it.next()), "50.0")
 
     def test_iterator_can_get_first_text(self):
-        html = '<table><tr><td><i>amount</i></td></tr></table>'
+        html = '<table><tr><td>amount</td>\n</tr></table>'
         table = Table(html)
         for row in table.rows():
             it = iter(row)
             self.assertEqual(str(it.next()), "amount")
+
+    def test_iterator_can_get_first_text_2(self):
+        html = '<table><tr><td><i>amount</i></td>\n</tr></table>'
+        table = Table(html)
+        for row in table.rows():
+            it = iter(row)
+            self.assertEqual(str(it.next()), "amount")
+
     def test_iterator_can_get_first(self):
         html = '<td><i>amount</i></td>'
+        doc = minidom.parseString(html)
+        def deepest(node):
+            if node is not None:
+                if node.hasChildNodes():
+                    return deepest(node.childNodes[0])
+                else:
+                    return node
+        self.assertEqual(deepest(doc).nodeValue, "amount")
+
+            
 
     def test_iterator_can_get_second(self):
         html = '<table><tr><td>50.0</td><td>52.0</td></tr></table>'
@@ -200,6 +218,11 @@ class TestNew(unittest.TestCase):
         fixture.process(table)
         self.assertEqual(fixture.trace[0], ['UserCreatesRoom', 'userName', 'anna', 'roomName', 'lotr'])
 
+    def _test_td_with_newline(self):
+        # I'm using deepest to get the text out.
+        html = '<table><tr><td colspan="2">CalculateDiscount</td>\n</tr></table>'
+        table = Table(html)
+        self.assertEqual('CalculateDiscount', table.name())
 
 if __name__ == '__main__':
     unittest.main()

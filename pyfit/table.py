@@ -49,8 +49,8 @@ class RowDomIter(object):
         cell = Cell(self.data)
         if self.data.nextSibling is not None:
             self.data = self.data.nextSibling
-            if self.data.nodeType != Node.ELEMENT_NODE:
-                return self.next()
+            while self.data.nextSibling is not None and self.data.nodeType != Node.ELEMENT_NODE:
+                self.data = self.data.nextSibling
         else:
             self.data = None
         return cell
@@ -86,4 +86,11 @@ class Table(object):
                 if row.nodeType == Node.ELEMENT_NODE:
                     yield Row(row)
         return row_iter(self.data.childNodes)
+
+    def name(self):
+        rows = self.rows()
+        row = rows.next()
+        it = RowIter(iter(row))
+        return str(it.next())
+
 
