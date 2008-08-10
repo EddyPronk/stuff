@@ -195,6 +195,12 @@ class TestNew(unittest.TestCase):
         self.assertEqual(fixture.trace[2], ['add', 'x', '12', 'y', '7'])
 
     def test_do_fixture(self):
+        table = '''
+            |TestDoFixture|
+            |User|anna|Creates|lotr|Room|
+        '''
+        
+        html = Document(wiki_table_to_html(table))
         html = '<table>' \
             '<tr><td>TestDoFixture</td></tr>' \
             '<tr><td>User</td><td>anna</td><td>Creates</td><td>lotr</td><td>Room</td></tr>' \
@@ -256,7 +262,6 @@ class TestNew(unittest.TestCase):
         '''
         
         doc = Document(wiki_table_to_html(table))
-        print doc.html()
 
 if __name__ == '__main__':
     unittest.main()
