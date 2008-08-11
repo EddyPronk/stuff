@@ -1,8 +1,10 @@
 # 20080316 2h
 # 20080317 3h
+# 20080317 1h
 
 import copy
 import unittest
+import string
 
 class Order :
     def __init__(self, side, code, price, quantity):
@@ -77,31 +79,51 @@ class Level :
     def __init__(self):
         self.orders = []
 
-def sell_order(code="BHP", price=50, quantity=100):
-    return Order('Sell', code, price, quantity)
+class LevelSummary :
+    def __init__(self):
+        self.sell_quantity = 0
+        self.buy_quantity = 0
 
-def buy_order(code="BHP", price=50, quantity=100):
-    return Order('Buy', code, price, quantity)
-    
-class Market :
+class OrderIdAllocator:
     def __init__(self):
         self.order_id = 0
+
+    def allocate(self, order):
+        self.order_id += 1
+        return self.order_id
+
+class Market :
+    def __init__(self):
         self.state = 'Open'
+        self.code = 'BHP'
+        self.levels = {}
+        self.order_id_allocator = OrderIdAllocator()
         self.sell_queue = SellOrderQueue()
         self.buy_queue = BuyOrderQueue()
         self.trade_subscribers = []
         self.order_subscribers = []
 
     def place_order(self, order):
-        self.order_id += 1
+        if order.quantity == 0:
+            return
+        order_id = self.order_id_allocator.allocate(order)
         #for subscriber in self.order_subscribers:
         #    subscriber.on_order_added(order)
-        if order.side == 'Buy':
-            self.buy_queue.add(order, self.order_id)
+
+        if self.levels.has_key(order.price):
+            level = self.levels[order.price]
         else:
-            self.sell_queue.add(order, self.order_id)
+            level = LevelSummary()
+            self.levels[order.price] = level
+
+        if order.side == 'Buy':
+            self.buy_queue.add(order, order_id)
+            level.buy_quantity += order.quantity
+        else:
+            self.sell_queue.add(order, order_id)
+            level.sell_quantity += order.quantity
         self.match()
-        return self.order_id
+        return order_id
 
     def set_state(self, state):
         self.state = state
@@ -127,6 +149,14 @@ class Market :
             for subscriber in self.order_subscribers:
                 subscriber.on_order_changed(order)
 
+    def printLevels(self):
+        print
+        x = self.levels.keys()
+        x.reverse()
+        for p in x:
+            l = self.levels[p]
+            print "%5i %5i %5i" % (l.buy_quantity, p, l.sell_quantity)
+
     def dump(self):
         print 'market:'
         print 'sell:'
@@ -144,17 +174,19 @@ class Market :
             for i in v.orders:
                 print i.__dict__
 
-
     def match(self):
-        if self.state != 'Open':
-            return
-
+        if self.state != 'Open' : return
         if self.buy_queue.levels and self.sell_queue.levels:
-            trade = Trade()
             buy_order = self.buy_queue.best_price_level().orders[0]
             sell_order = self.sell_queue.best_price_level().orders[0]
             quantity=  min(sell_order.quantity, buy_order.quantity)
             if buy_order.price >= sell_order.price:
+                trade = Trade()
+                trade.code = self.code
+                trade.quantity = quantity
+                trade.price = sell_order.price
+                trade.sell_order_id = sell_order.id
+                trade.buy_order_id = buy_order.id
                 self.reduce(self.buy_queue, buy_order, quantity)
                 self.reduce(self.sell_queue, sell_order, quantity)
                 for subscriber in self.trade_subscribers:
@@ -177,13 +209,22 @@ class Exchange :
     def cancel_order(self, order):
         return self.market.cancel_order(order)
 
+########################################################
+# TEST CODE
 
+def sell_order(code="BHP", price=50, quantity=100):
+    return Order('Sell', code, price, quantity)
+
+def buy_order(code="BHP", price=50, quantity=100):
+    return Order('Buy', code, price, quantity)
+    
 class Trades:
     def __init__(self):
         self.trades = []
 
     def on_trade(self, trade):
         self.trades.append(trade)
+        #print trade.__dict__
 
 class Orders:
     def __init__(self):
@@ -197,13 +238,6 @@ class Orders:
 
     def on_order_removed(self, order):
         print 'order removed', order.__dict__
-
-class Prices:
-    def __init__(self):
-        pass
-
-    def on_price_level_added(self, price):
-        print 'price level added : %s' % price
 
 class TestOrderQueue(unittest.TestCase):
     def setUp(self):
@@ -253,7 +287,6 @@ class TestMarket(unittest.TestCase):
         self.trades = Trades()
         self.orders = Orders()
 
-        self.prices = Prices()
         #self.asx.market.price_subscribers.append(self.prices)
         #self.asx.market.order_subscribers.append(self.orders)
         self.asx.market.trade_subscribers.append(self.trades)
@@ -315,5 +348,114 @@ class TestMarket(unittest.TestCase):
         market.set_state('Open')
         self.assertEqual(len(self.trades.trades), 2)
 
+    def testIterate(self):
+        market = self.connection.market
+        market.set_state('Closed')
+
+        x = '''\
+            4500 825  8500
+           28200 824 16900
+               0 823  1900
+            1900 822     0
+               0 821     0
+           49700 820 17500
+            8000 819  3600
+           16400 818 11600'''
+
+        for line in x.split('\n'):
+            q1, p, q2 = [string.atoi(v) for v in line.split()]
+            self.connection.place_order(buy_order(price=p, quantity=q1))
+            self.connection.place_order(sell_order(price=p, quantity=q2))
+
+        self.connection.market.printLevels()
+
+def levelIter(l1, l2):
+    it1 = iter(l1)
+    it2 = iter(l2)
+    v = None
+    try:
+        v = it1.next()
+    except StopIteration:
+        pass
+
+    if v == None:
+        try:
+            v = it2.next()
+        except StopIteration:
+            yield None
+
+    yield v
+
+    prev = 0
+    while(v != None):
+        v = None
+        try:
+            v = it1.next()
+        except StopIteration:
+            pass
+
+        if v == None:
+            try:
+                v = it2.next()
+            except StopIteration:
+                yield None
+
+        if v > prev:
+            prev = v
+            yield v
+
+class TestIter(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def testBothEmpty(self):
+        x = levelIter([],[])
+        self.assertEqual(None, x.next())
+
+    def testSecondEmpty(self):
+        x = levelIter([1],[])
+        self.assertEqual(1, x.next())
+
+    def testSecondEmpty2(self):
+        x = levelIter([2],[])
+        self.assertEqual(2, x.next())
+
+    def testFirstEmpty(self):
+        x = levelIter([],[1])
+        self.assertEqual(1, x.next())
+
+    def testFirstEmpty(self):
+        x = levelIter([1,2],[])
+        self.assertEqual(1, x.next())
+        self.assertEqual(2, x.next())
+
+    def testFirstEmpty25(self):
+        x = levelIter([],[2])
+        self.assertEqual(2, x.next())
+        self.assertEqual(None, x.next())
+
+    def testFirstEmpty(self):
+        x = levelIter([1],[2])
+        self.assertEqual(1, x.next())
+        self.assertEqual(2, x.next())
+
+    def testFirstEmpty2(self):
+        x = levelIter([1,2],[3])
+        self.assertEqual(1, x.next())
+        self.assertEqual(2, x.next())
+        self.assertEqual(3, x.next())
+
+    def testFirstEmpty3(self):
+        x = levelIter([1],[2,3])
+        self.assertEqual(1, x.next())
+        self.assertEqual(2, x.next())
+        self.assertEqual(3, x.next())
+
+    def testFirstEmpty3(self):
+        x = levelIter([1,2],[2,3])
+        self.assertEqual(1, x.next())
+        self.assertEqual(2, x.next())
+        self.assertEqual(3, x.next())
+        
 if __name__ == '__main__':
     unittest.main()

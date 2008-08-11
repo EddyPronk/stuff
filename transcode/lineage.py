@@ -53,10 +53,13 @@ class Simple:
                     track.title = line
                     track.filename = files[i]
 
+class Item: pass 
+
 class Generic:
 
     class TitleFilter():
-        def __init__(self, re, f):
+        def __init__(self, context, re, f):
+            self.context = context
             self.re = re
             self.f = f
             self.matches = []
@@ -66,15 +69,24 @@ class Generic:
             if res is not None:
                 log(3, 'apply [%s matches %s]' % (line, self.re))
                 self.f(res)
-                self.matches.append(self.f(res))
+                list = self.f(res)
+                print list
+                item = Item()
+                item.disc_number = self.context.disc_number
+                item.track_number = string.atoi(list[0])
+                item.artist = list[1]
+                item.title = list[2]
+                self.matches.append(item)
 
-    def __init__(self, album):
+    def __init__(self, context, album):
         self.album = album
         self.r = []
+        self.titles = []
         self.title_filters = []
         self.last_track_number = 0
         self.last_track_number2 = 0
         self.selectDisc('1')
+        self.disc_number = 1
 
         self.checksums = {}
         #self.add(('^d([0-9]+)t([0-9]+)',       lambda r : self.selectDisc(r.group(1))))
@@ -84,21 +96,24 @@ class Generic:
 
         self.add_filter('^([0-9]+)\s+\d+:\d{2}\.\d{2}\s+(.*)', lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('^([0-9]+)\.\s*(.*)',            lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('^([0-9]+)- (.*)',                lambda r : (r.group(1), None, r.group(2)))
+        self.add_filter('^([0-9]+) - (.*)',                lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('^([0-9]+) (.*)',                lambda r : (r.group(1), None, r.group(2)))
         self.add_filter('([0-9]+)\. \(.*\) (.*) - (.*)', lambda r : (r.group(1), r.group(2), r.group(3)))
 
-#        self.add(('(DISC|Disc|cd|CD)\s*([0-9])',       lambda r : self.selectDisc(r.group(2))))
+        self.add(('(DISC|Disc|cd|CD)\s*([0-9]+)',       lambda r : self.selectDisc(r.group(2))))
 
 
     def add(self, entry):
         self.r.append(entry)
 
     def add_filter(self, re, f):
-        filter = self.TitleFilter(re, f)
+        filter = self.TitleFilter(self, re, f)
         self.title_filters.append(filter)
 
     def selectDisc(self, disc_number):
     
+        self.disc_number = string.atoi(disc_number)
         self.disc = self.album.disc(string.atoi(disc_number))
         self.last_track_number2 = 0
         log(2, '[disc #%s]' % disc_number)
@@ -108,8 +123,11 @@ class Generic:
         log(2, '[disc #%s]' % disc_number)
         self.disc = self.album.disc(disc_number)
 
-    def insertTitle(self, number, artist, title):
-        track_number = string.atoi(number)
+    def insertTitle(self, item):
+        
+        item.disc_number = self.disc_number
+        self.titles.append(item)
+        return
         if track_number > 100:
             log(1, '[IGNORE title #%s "%s"]' % (track_number, title))
             return
@@ -131,8 +149,9 @@ class Generic:
         res = re.search('(.*)\.(flac|ape|shn)$', title)
         if res is not None:
             title = res.group(1)
-        log(2, '[title #%s "%s"]' % (track_number, title))
+        log(2, '[insert title #%s "%s"]' % (track_number, title))
         track.title = title
+        
 
     def insertChecksum(self, path, checksum):
         # fix the directory seperator
@@ -178,7 +197,7 @@ class Generic:
         else:
             print '[ignoring %s]' % filename
 
-    def read(self, filename, content):
+    def read(self, filename):
         self.selectDisc('1')
         print 'read %s' % filename
         self.last_track_number = 0
@@ -193,16 +212,22 @@ class Generic:
         longest = 0
         for i, list in enumerate(m):
             l = len(list)
-            print l
+            #print l
             if(l > x):
                 x = l
                 longest = i
 
         for title in m[longest]:
-            self.insertTitle(title[0], title[1], title[2])
+            print title.__dict__
+
+            self.insertTitle(title)
             
         for t in self.title_filters:
             t.matches = []
+
+        for item in self.titles:
+            #print item
+            pass
 
     def parseDisc(self, s, comment):
         res = re.search('(DISC|Disc|cd|CD)\s*([0-9])', s)
@@ -216,11 +241,15 @@ class Generic:
             line = line.replace('\r', '')
             line = line.replace('\n', '')
             log(3, line)
+            res = re.search('15 july 2007', line)
+            if res is not None:
+                print 'just a date'
+                continue
             self.try_match(line)
 
     def process(self):
         for disc in self.album.discs.values():
-            log(2, '[DISC %d]' % disc.number)
+            #log(2, '[DISC %d]' % disc.number)
             res = find_diffs(disc.checksums.keys())
             for filename, checksum in disc.checksums.iteritems():
                 track_number = string.atoi(re.search('([0-9]+)', filename[res:]).group(1))
@@ -266,13 +295,12 @@ class Lineage:
         self.on_cue_sheet_written = None
         self.album = album.Album()
         self.methods = []
-        self.methods.append(Generic(self.album))
-        self.methods.append(Simple(self.album))
+        self.methods.append(Generic(self, self.album))
+        #self.methods.append(Simple(self, self.album))
 
-    def parse(self, files, content):
+    def parse(self, file):
         for method in self.methods:
-            for file in files:
-                method.read(file, content)
+            method.read(file)
 
             if len(self.album.disc(1).tracks) != 0:
                 break
@@ -287,6 +315,7 @@ class Lineage:
                 file = open(cue_filename, 'w')
                 self.write_cue_sheet_(file, disc)
                 file.close()
+                os.system('cat "%s"' % cue_filename)
                 if(self.on_cue_sheet_written):
                     self.on_cue_sheet_written(cue_filename)
             else:
@@ -300,7 +329,7 @@ class Lineage:
         file.write('COMMENT "LAME 3.97 (--preset standard)"\n')
         file.write('\n')
         for track in disc.tracks.values():
-            track.title = " ".join([ word.capitalize() for word in track.title.split() ])
+            #track.title = " ".join([ word.capitalize() for word in track.title.split() ])
             #file.write('TRACK %s AUDIO\n' % track.number)
             file.write('TRACK %s\n' % track.number)
             file.write('  TITLE "%s"\n' % track.title)

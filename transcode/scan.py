@@ -41,6 +41,7 @@ class Scanner:
         return newlist
 
     def scan(self, dir):
+        self.scan_root = dir
         self.traverse(dir)
     
     def traverse(self, dir, parent = None):
@@ -52,7 +53,8 @@ class Scanner:
             if os.path.isdir(l):
                 self.traverse(l, os.getcwd())
             else:
-                self.directory_visitor.on_file(l)
+                #self.directory_visitor.on_file(os.getcwd()[len(self.scan_root) + 1:], l)
+                self.directory_visitor.on_file(os.getcwd(), l)
 
         self.directory_visitor.on_leaving_dir(os.getcwd(), cwd)
         chdir(cwd)
@@ -65,6 +67,13 @@ class FlayGuy:
     def on_file(self, file):
         print 'file %s' % file
 
+class Context:
+    def __init__(self):
+        self.media_files = []
+        self.meta_data_files = []
+        self.album_root = None
+        self.is_multi_disc = False
+
 class ScanGuy:
 
     def make_lineage(self):
@@ -73,21 +82,60 @@ class ScanGuy:
         return l
 
     def __init__(self, callback = None):
+        self.media_types = set( ['.ape', '.flac'] )
+        self.meta_data_types = set( ['.txt'] )
         self.callback = callback
         self.lineage = self.make_lineage()
-        self.album_dir = ''
+        self.context = Context()
         self.disc_number = 1
         self.parent_done = False # metadata in parent has not been read
 
     def on_enter_dir(self, dir, parent = None):
+        print 'entering %s' % dir
+
         res = re.search('(CD|cd|Disc)\s*([0-9])', dir)
         if res is not None:
-            self.disc_number = string.atoi(res.group(2))
-        else:
-            self.disc_number = 1
-        self.media_files = []
+            self.is_multi_disc = True
 
     def on_leaving_dir(self, dir, parent = None):
+        print 'before leaving %s (parent %s)' % (dir, parent)
+        if self.context.album_root == None:
+            if self.is_multi_disc:
+                print 'multi disc set'
+                album_root = parent
+            else:
+                print 'single disc'
+                album_root = dir
+
+            if len(self.context.media_files):
+                print 'content found in %s' % dir
+                print 'setting album_root to %s' % album_root
+                self.context.album_root = album_root
+
+        if dir == self.context.album_root:
+            print 'album done'
+
+            def relative_path(path1, path2):
+                return path1[len(path2) + 1:]
+
+            cwd = os.getcwd()
+
+            print 'content:'
+            for item in self.context.media_files:
+                print "'%s' '%s'" % (relative_path(item[0], cwd), item[1])
+
+            print 'meta data:'
+            for item in self.context.meta_data_files:
+                filename = os.path.join(relative_path(item[0], cwd), item[1])
+                self.lineage.parse(filename)
+
+            self.lineage.write_cue_sheets()
+            self.lineage = self.make_lineage()
+            self.context = Context()
+
+        print 'leaving %s' % dir
+
+    def on_leaving_dir_old(self, dir, parent = None):
         if len(self.media_files):
             content_dir = os.getcwd()
             self.lineage.album.disc(self.disc_number).content_root = content_dir
@@ -120,7 +168,7 @@ class ScanGuy:
                     def write(self, string):
                         pass
 
-                self.lineage.parse(txt, content)
+                #self.lineage.parse(txt, content)
 
             else:
                 print 'already have info from parent'
@@ -133,13 +181,23 @@ class ScanGuy:
             self.lineage = self.make_lineage()
             self.album_dir = ''
             self.parent_done = False
-        self.media_files = []
+            for item in self.media_files:
+                print item
+                pass
 
-    def on_file(self, file):
+    def on_file(self, dir, file):
+        #print "on_file dir='%s' file='%s'" % (dir, file)
+        (root, ext) = os.path.splitext(file)
+        if ext in self.media_types:
+            self.context.media_files.append( [dir, file] )
+        elif ext in self.meta_data_types:
+            self.context.meta_data_files.append( [dir, file] )
+
         expr = '\.(flac|ape|shn)$'
         res = re.search(expr, file)
         if res is not None and os.path.isfile(file):
-            self.media_files.append(file)
+            pass
+            #self.media_files.append(file)
             #os.system('rm %s' % file)
 
     def glob(self, parent, pattern):
@@ -161,6 +219,7 @@ class RegressionTester:
         expected_file = file + '.expected'
         #os.system('cp "%s" "%s"' % (file, expected_file))
         cmd = 'diff "%s" "%s"' % (expected_file, file)
+        print cmd
         res = os.system(cmd)
         if(res != 0):
             self.failed += 1

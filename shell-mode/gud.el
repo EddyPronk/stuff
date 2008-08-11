@@ -638,8 +638,8 @@ required by the caller."
 
 	;; Using annotations, switch to gud-gdba-marker-filter.
 	(when (string-equal match "prompt")
-	  (require 'gdb-ui)
-	  (gdb-prompt nil))
+	  (comint-dynamic-list-completions
+	   (split-string (substring gud-marker-acc 0 (match-beginning 0)))))
 
 	(setq
 	 ;; Append any text before the marker to the output we're going

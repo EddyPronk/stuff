@@ -7,7 +7,7 @@
 ;; Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2003,
 ;;  2004, 2005, 2006, 2007 Free Software Foundation, Inc.
 
-;; This file is part of GNU Emacs.
+;; This file is (not yet) part of GNU Emacs.
 
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -41,6 +41,119 @@
 ;;; Code:
 
 ;; (global-set-key [f5] 'eval-buffer)
+
+;; When we send a command to the debugger via gud-call, it's annoying
+;; to see the command and the new prompt inserted into the debugger's
+;; buffer; we have other ways of knowing the command has completed.
+;;
+;; If the buffer looks like this:
+;; --------------------
+;; (gdb) set args foo bar
+;; (gdb) -!-
+;; --------------------
+;; (the -!- marks the location of point), and we type `C-x SPC' in a
+;; source file to set a breakpoint, we want the buffer to end up like
+;; this:
+;; --------------------
+;; (gdb) set args foo bar
+;; Breakpoint 1 at 0x92: file make-docfile.c, line 49.
+;; (gdb) -!-
+;; --------------------
+;; Essentially, the old prompt is deleted, and the command's output
+;; and the new prompt take its place.
+;;
+;; Not echoing the command is easy enough; you send it directly using
+;; process-send-string, and it never enters the buffer.  However,
+;; getting rid of the old prompt is trickier; you don't want to do it
+;; when you send the command, since that will result in an annoying
+;; flicker as the prompt is deleted, redisplay occurs while Emacs
+;; waits for a response from the debugger, and the new prompt is
+;; inserted.  Instead, we'll wait until we actually get some output
+;; from the subprocess before we delete the prompt.  If the command
+;; produced no output other than a new prompt, that prompt will most
+;; likely be in the first chunk of output received, so we will delete
+;; the prompt and then replace it with an identical one.  If the
+;; command produces output, the prompt is moving anyway, so the
+;; flicker won't be annoying.
+;;
+;; So - when we want to delete the prompt upon receipt of the next
+;; chunk of debugger output, we position gud-delete-prompt-marker at
+;; the start of the prompt; the process filter will notice this, and
+;; delete all text between it and the process output marker.  If
+;; gud-delete-prompt-marker points nowhere, we leave the current
+;; prompt alone.
+(defvar gud-delete-prompt-marker nil)
+
+(defvar gud-filter-pending-text nil
+  "Non-nil means this is text that has been saved for later in `gud-filter'.")
+
+(defvar gud-filter-defer-flag nil
+  "Non-nil means don't process anything from the debugger right now.
+It is saved for when this flag is not set.")
+
+;; These functions are responsible for inserting output from your debugger
+;; into the buffer.  The hard work is done by the method that is
+;; the value of gud-marker-filter.
+
+(defun gud-filter (proc string)
+  ;; Here's where the actual buffer insertion is done
+  (let (output process-window)
+    (if (buffer-name (process-buffer proc))
+	(if gud-filter-defer-flag
+	    ;; If we can't process any text now,
+	    ;; save it for later.
+	    (setq gud-filter-pending-text
+		  (concat (or gud-filter-pending-text "") string))
+
+	  ;; If we have to ask a question during the processing,
+	  ;; defer any additional text that comes from the debugger
+	  ;; during that time.
+	  (let ((gud-filter-defer-flag t))
+	    ;; Process now any text we previously saved up.
+	    (if gud-filter-pending-text
+		(setq string (concat gud-filter-pending-text string)
+		      gud-filter-pending-text nil))
+
+	    (with-current-buffer (process-buffer proc)
+	      ;; If we have been so requested, delete the debugger prompt.
+	      (save-restriction
+		(widen)
+		(if (marker-buffer gud-delete-prompt-marker)
+		    (let ((inhibit-read-only t))
+		      (delete-region (process-mark proc)
+				     gud-delete-prompt-marker)
+		      (comint-update-fence)
+		      (set-marker gud-delete-prompt-marker nil)))
+		;; Save the process output, checking for source file markers.
+		(setq output (xsh-marker-filter string))
+		;; Check for a filename-and-line number.
+		;; Don't display the specified file
+		;; unless (1) point is at or after the position where output appears
+		;; and (2) this buffer is on the screen.
+		(setq process-window
+		      (and gud-last-frame
+			   (>= (point) (process-mark proc))
+			   (get-buffer-window (current-buffer)))))
+
+	      ;; Let the comint filter do the actual insertion.
+	      ;; That lets us inherit various comint features.
+	      (comint-output-filter proc output))
+
+	    ;; Put the arrow on the source line.
+	    ;; This must be outside of the save-excursion
+	    ;; in case the source file is our current buffer.
+	    (if process-window
+		(with-selected-window process-window
+		  (gud-display-frame))
+	      ;; We have to be in the proper buffer, (process-buffer proc),
+	      ;; but not in a save-excursion, because that would restore point.
+	      (with-current-buffer (process-buffer proc)
+		(gud-display-frame))))
+
+	  ;; If we deferred text that arrived during this processing,
+	  ;; handle it now.
+	  (if gud-filter-pending-text
+	      (gud-filter proc ""))))))
 
 (defvar xsh-marker-regexp
   ;; This used to use path-separator instead of ":";
@@ -128,8 +241,11 @@
   (interactive)
   (setq buffer (get-buffer-create (or buffer "*shell*")))
   (pop-to-buffer buffer)
-  (make-comint-in-buffer "name" "*shell*" "/home/epronk/annotation/proto.py")
-  ;(set-process-filter (get-buffer-process buffer) 'xsh-marker-filter)
+  (add-hook 'comint-output-filter-functions
+	  'xsh-marker-filter)
+  ;(make-comint-in-buffer "name" "*shell*" "/home/epronk/stuff/shell-mode/proto.py")
+  (comint-run "/home/epronk/stuff/shell-mode/proto.py")
+  ;(set-process-filter (get-buffer-process buffer) 'gud-filter)
   )
 
 (xsh-marker-filter "foo
@@ -139,3 +255,21 @@ foobaz
 fooman
 completions
 ")
+
+
+(xsh-marker-filter "foo
+pre-prompt
+(gdb) 
+prompt")
+
+(xsh-marker-filter "foo
+")
+
+(xsh-marker-filter "pre-prompt
+")
+(xsh-marker-filter "(gdb) 
+")
+(xsh-marker-filter "pre-prompt
+")
+prompt")
+
