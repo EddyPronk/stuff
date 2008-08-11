@@ -171,15 +171,15 @@ class TestNew(unittest.TestCase):
         self.assertEqual('CalculateDiscount', str(name))
         #print table.doc.toxml()
 
-    def test_action_fixture(self):
-        html = '<table>' \
-            '<tr><td>TestActionFixture</td></tr>' \
-            '<tr><td>enter</td><td>user</td><td>anna</td></tr>' \
-            '<tr><td>check</td><td>amount</td><td>24</td></tr>' \
-            '<tr><td>check</td><td>add</td><td>12</td><td>7</td></tr>' \
-            '</table>'
-
-        table = Table(html)
+    def test_action_fixture2(self):
+        table = '''
+            |TestActionFixture|
+            |enter|user  |anna|
+            |check|amount|24|
+            |check|add   |12|7|
+        '''
+        
+        table = Table(wiki_table_to_html(table))
         rows = table.rows()
         row = rows.next()
         it = RowIter(iter(row))
@@ -200,13 +200,7 @@ class TestNew(unittest.TestCase):
             |User|anna|Creates|lotr|Room|
         '''
         
-        html = Document(wiki_table_to_html(table))
-        html = '<table>' \
-            '<tr><td>TestDoFixture</td></tr>' \
-            '<tr><td>User</td><td>anna</td><td>Creates</td><td>lotr</td><td>Room</td></tr>' \
-            '</table>'
-
-        table = Table(html)
+        table = Table(wiki_table_to_html(table))
         rows = table.rows()
         row = rows.next()
         it = RowIter(iter(row))
@@ -219,7 +213,7 @@ class TestNew(unittest.TestCase):
         fixture.process(table)
         self.assertEqual(fixture.trace[0], ['UserCreatesRoom', 'userName', 'anna', 'roomName', 'lotr'])
 
-    def _test_td_with_newline(self):
+    def test_td_with_newline(self):
         # I'm using deepest to get the text out.
         html = '<table><tr><td colspan="2">CalculateDiscount</td>\n</tr></table>'
         table = Table(html)
@@ -255,7 +249,7 @@ class TestNew(unittest.TestCase):
         
     def test_market_picture(self):
         table = '''
-            |market picture |prepare|BHP    |
+            |market picture|
             |qty  |bid price|ask price|qty  |
             |1,900|     82.0|83.0     |1,900|
             |  500|     82.0|         |     |
