@@ -4,7 +4,7 @@ import re
 import sys
 import inspect
 from fixtures import *
-from testfixtures import *
+from CalculateDiscount import *
 
 class MarketPicture(object):
     pass

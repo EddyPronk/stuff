@@ -36,10 +36,7 @@ class Client(Protocol):
             elif self.state is 1:
                 self.state = 0
                 print 'state 1'
-                #length = int(file.read(10))
-                print 'length %s' % length
                 content = file.read(length)
-                #print 'content [%s]' % content
                 output = self.context.process(content)
         #reactor.stop()
                 self.transport.write(util.format_10_digit_number(len(output) + 1))
