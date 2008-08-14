@@ -5,6 +5,7 @@ import sys
 import inspect
 from fixtures import *
 from CalculateDiscount import *
+import traceback
 
 class MarketPicture(object):
     pass
@@ -35,10 +36,7 @@ class TestDoFixture(DoFixture):
     def UserCreatesRoom(self, userName, roomName):
         self.trace.append(['UserCreatesRoom', "userName", userName, "roomName", roomName])
 
-
-    
-
-class TestNew(unittest.TestCase):
+class TestTable(unittest.TestCase):
 
     def testSignature(self):
         class FooFixture(object):
@@ -299,15 +297,69 @@ class TestNew(unittest.TestCase):
         x1 = f.first
         x2 = x1(table)
 
-        # return the next object in the flow or None.
-        # check if fixture has attribute with name of next table.
-        # if not create an instance with that name
-
         # instance - marketPicture
         # class    - MarketPicture
 
         x2(table)
+
+class Engine(object):
+    # return the next object in the flow or None.
+    # check if fixture has attribute with name of next table.
+    # if not create an instance with that name
+ 
+   def process(self, table):
+        pass
+
+class TestTable2(unittest.TestCase):
+    def setUp(self):
+        self.engine = Engine()
+
+    def process(self, table):
+        self.engine.process(wiki_table_to_html(table))
+
+    def test_a(self):
+        self.process('|TradingStart|')
+
+class ImportError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Importer(object):
+    
+    def do_import_module(self, module_name):
+        __import__(module_name)
+
+    def import_module(self, name):
+        try:
+            self.do_import_module(name)
+        except Exception, e:
+            raise ImportError(traceback.format_exc())
+
+class FakeImporter(Importer):
+    def do_import_module(self, name):
+        eval('import doesntexist')
+
+class TestTable3(unittest.TestCase):
+
+    def test_backtrace(self):
+        imp = FakeImporter()
+        try:
+            result = imp.import_module('dummy')
+        except Exception, inst:
+            pass
         
+        self.assertEqual(inst.value, \
+                             'Traceback (most recent call last):\n' \
+                             '  File "test_table.py", line 336, in import_module\n' \
+                             '    self.do_import_module(name)\n' \
+                             '  File "test_table.py", line 342, in do_import_module\n' \
+                             "    eval('import doesntexist')\n" \
+                             '  File "<string>", line 1\n' \
+                             '    import doesntexist\n' \
+                             '         ^\n' \
+                             'SyntaxError: invalid syntax\n')
 
 if __name__ == '__main__':
     unittest.main()

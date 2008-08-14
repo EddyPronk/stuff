@@ -119,7 +119,11 @@ class Document(object):
             if node.nodeName == 'table':
                 table = Table(node)
                 name = table.name()
-                module = __import__(name)
+                try:
+                    module = __import__(name)
+                except Exception, e:
+                    a = traceback.format_exc()
+                    print '{\n%s}' % str(a)
                 class_ = getattr(module, name)
                 fixture = class_()
                 #fixture = x(
