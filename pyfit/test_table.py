@@ -329,14 +329,20 @@ class TestTable(unittest.TestCase):
         table = Table(wiki_table_to_html(table))
         rows = table.rows()
         row = rows.next()
-        it = RowIter(iter(row))
-        name = it.next() 
-
+ 
         l = []
-        for x,y in rzip(rows.next(), rows.next()):
-            l.append('%s_%s' % (x,y))
+        for prefix,i in rzip(rows.next(), rows.next()):
+            l.append('%s_%s' % (prefix,i))
 
         self.assertEqual(l, ['bid_qty', 'bid_price', 'ask_price', 'ask_qty'])
+
+    def test_function_names(self):
+        t = 'user creates room'
+        prefix = 'local'
+        words = t.split()
+        words.insert(0, prefix)
+        f = '_'.join(words)
+        self.assertEqual(f, 'local_user_creates_room')
 
 class Engine(object):
     # return the next object in the flow or None.
