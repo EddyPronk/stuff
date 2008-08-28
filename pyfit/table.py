@@ -12,7 +12,10 @@ class Cell(object):
                     return deepest(node.childNodes[0])
                 else:
                     return node
-        return deepest(self.data).nodeValue
+        d = deepest(self.data).nodeValue
+        if d == None:
+            return ''
+        return d
 
     def passed(self):
         self.data.setAttribute("class", "pass")
