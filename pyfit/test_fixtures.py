@@ -1,6 +1,7 @@
 import unittest
 from fixtures import *
 from table import *
+import traceback
 
 class FakeActionFixture(ActionFixture):
 
@@ -32,7 +33,11 @@ class TradingStart(object):
         pass
 
 def CreateFixture(name):
-    return globals()[name]()
+    try:
+        type = globals()[name]
+    except KeyError, inst:
+        raise Exception("Could not create fixture '%s'" % name)
+    return type()
 
 class Engine(object):
     
@@ -48,9 +53,9 @@ class Engine(object):
         else:
             try:
                 f = getattr(self.fixture, name)
+                self.fixture = f()
             except AttributeError, inst:
-                raise Exception("not found in current fixture.")
-            self.fixture = f()
+                self.fixture = CreateFixture(str(name))
         
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
@@ -167,14 +172,22 @@ class TestFixtures(unittest.TestCase):
         f = '_'.join(words)
         self.assertEqual(f, 'local_user_creates_room')
 
+    def test_if_fails_if_fixture_doesnt_exist(self):
+        try:
+            fixture = self.process('|NoneExisting|')
+        except Exception, inst:
+            pass
+        
+        self.assertEqual(str(inst), "Could not create fixture 'NoneExisting'")
+
     def test_flow_mode(self):
-        wiki = '|First|'
-
-        fixture = self.process(wiki)
-
-        wiki = '|Second|'
-
-        fixture = self.process(wiki)
-
+        fixture = self.process('|First|')
+        fixture = self.process('|Second|')
         self.assertEqual(type(fixture), Two)
+
+    def test_flow_mode2(self):
+        fixture = self.process('|First|')
+        fixture = self.process('|FakeActionFixture|')
+        self.assertEqual(type(fixture), FakeActionFixture)
+
 
