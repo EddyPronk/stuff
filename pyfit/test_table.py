@@ -3,20 +3,9 @@ from xml.dom import minidom, Node
 import re
 import sys
 import inspect
-from fixtures import *
+from table import *
 from CalculateDiscount import *
 import traceback
-
-class MarketPicture(object):
-    pass
-        
-class TradingStart(object):
-    def __init__(self):
-        self.market_picture = {}
-        self.market_picture['BHP'] = MarketPicture()
-
-    def run(self):
-        pass
 
 class TestTable(unittest.TestCase):
 
@@ -204,32 +193,6 @@ class TestTable(unittest.TestCase):
         html = doc.html()
         #print html
         
-    def test_market_picture(self):
-        
-        table = '|TradingStart|'
-        name = 'TradingStart'
-        fixture = globals()[name]()
-
-        fixture.run()
-        li = getattr(fixture, 'market_picture')
-        pic = li['BHP']
-
-        table = '|PrepareMarket|BHP|'
-
-        def prepare_market(code):
-            pass
-
-        prepare_market('BHP')
-        
-        table = '''
-            |market picture|
-            |qty  |bid price|ask price|qty  |
-            |1,900|     82.0|83.0     |1,900|
-            |  500|     82.0|         |     |
-        '''
-        
-        table = Document(wiki_table_to_html(table))
-
     def test_flow(self):
         table = [1, 2, 3]
         class Flow(object):
@@ -248,33 +211,6 @@ class TestTable(unittest.TestCase):
         # class    - MarketPicture
 
         x2(table)
-
-    def test_dual_header(self):
-        table = '''
-            |name|
-            |bid  |     |ask  |     |
-            |qty  |price|price|qty  |
-            |1,900| 82.0|83.0 |1,900|
-            |  500| 82.0|     |     |
-        '''
-
-        table = Table(wiki_table_to_html(table))
-        rows = table.rows()
-        row = rows.next()
- 
-        l = []
-        for prefix,i in rzip(rows.next(), rows.next()):
-            l.append('%s_%s' % (prefix,i))
-
-        self.assertEqual(l, ['bid_qty', 'bid_price', 'ask_price', 'ask_qty'])
-
-    def test_function_names(self):
-        t = 'user creates room'
-        prefix = 'local'
-        words = t.split()
-        words.insert(0, prefix)
-        f = '_'.join(words)
-        self.assertEqual(f, 'local_user_creates_room')
 
 class Engine(object):
     # return the next object in the flow or None.
