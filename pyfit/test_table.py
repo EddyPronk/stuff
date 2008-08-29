@@ -18,14 +18,6 @@ class TradingStart(object):
     def run(self):
         pass
 
-def rzip(a,b):
-    prev = ''
-    for x,y in zip(a,b):
-        if str(x) == '':
-            x = prev
-        prev = x
-        yield (x,y)
-
 class TestActionFixture(ActionFixture):
 
     trace = []
@@ -382,28 +374,6 @@ class Importer(object):
 class FakeImporter(Importer):
     def do_import_module(self, name):
         eval('import doesntexist')
-
-class TestTable3(unittest.TestCase):
-
-    def test_backtrace(self):
-        imp = FakeImporter()
-        try:
-            result = imp.import_module('dummy')
-        except Exception, inst:
-            pass
-        
-'''
-        self.assertEqual(inst.value, \
-                             'Traceback (most recent call last):\n' \
-                             '  File "test_table.py", line 336, in import_module\n' \
-                             '    self.do_import_module(name)\n' \
-                             '  File "test_table.py", line 342, in do_import_module\n' \
-                             "    eval('import doesntexist')\n" \
-                             '  File "<string>", line 1\n' \
-                             '    import doesntexist\n' \
-                             '         ^\n' \
-                             'SyntaxError: invalid syntax\n')
-'''
 
 if __name__ == '__main__':
     unittest.main()

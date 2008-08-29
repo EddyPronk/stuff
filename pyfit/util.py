@@ -51,4 +51,13 @@ def wiki_table_to_html(table):
     output += "</table>"
     return output
 
+def rzip(a,b):
+    prev = ''
+    for x,y in zip(a,b):
+        if str(x) == '':
+            x = prev
+        prev = x
+        yield (x,y)
+
+
         
