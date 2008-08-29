@@ -45,39 +45,31 @@ class TestFixtures(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
 
-    def test_action_fixture2(self):
-        table = '''
+    def process(self, wiki):
+        return self.engine.process(Table(wiki_table_to_html(wiki)))
+
+    def test_action_fixture(self):
+        wiki = '''
             |FakeActionFixture|
             |enter|user  |anna|
             |check|amount|24|
             |check|add   |12|7|
         '''
         
-        table = Table(wiki_table_to_html(table))
-        
-        fixture = self.engine.process(table)
+        fixture = self.process(wiki)
 
         self.assertEqual(fixture.trace[0], ['user', 'userName', 'anna'])
         self.assertEqual(fixture.trace[1], ['amount', 'x', '24'])
         self.assertEqual(fixture.trace[2], ['add', 'x', '12', 'y', '7'])
 
     def test_do_fixture(self):
-        table = '''
+        wiki = '''
             |FakeDoFixture|
             |User|anna|Creates|lotr|Room|
         '''
         
-        table = Table(wiki_table_to_html(table))
-        rows = table.rows()
-        row = rows.next()
-        it = RowIter(iter(row))
-        name = it.next() 
+        fixture = self.process(wiki)
 
-        def CreateFixture(name):
-            return globals()[name]()
-
-        fixture = CreateFixture(str(name))
-        fixture.process(table)
         self.assertEqual(fixture.trace[0], ['UserCreatesRoom', 'userName', 'anna', 'roomName', 'lotr'])
 
     def test_market_picture(self):
