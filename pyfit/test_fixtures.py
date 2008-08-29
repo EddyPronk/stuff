@@ -31,7 +31,20 @@ class TradingStart(object):
     def run(self):
         pass
 
+def CreateFixture(name):
+    return globals()[name]()
+
+class Engine(object):
+    def process(self, table):
+        name = table.name()
+        fixture = CreateFixture(str(name))
+        fixture.process(table)
+        return fixture
+
 class TestFixtures(unittest.TestCase):
+    def setUp(self):
+        self.engine = Engine()
+
     def test_action_fixture2(self):
         table = '''
             |FakeActionFixture|
@@ -41,16 +54,9 @@ class TestFixtures(unittest.TestCase):
         '''
         
         table = Table(wiki_table_to_html(table))
-        rows = table.rows()
-        row = rows.next()
-        it = RowIter(iter(row))
-        name = it.next() 
+        
+        fixture = self.engine.process(table)
 
-        def CreateFixture(name):
-            return globals()[name]()
-
-        fixture = CreateFixture(str(name))
-        fixture.process(table)
         self.assertEqual(fixture.trace[0], ['user', 'userName', 'anna'])
         self.assertEqual(fixture.trace[1], ['amount', 'x', '24'])
         self.assertEqual(fixture.trace[2], ['add', 'x', '12', 'y', '7'])
@@ -102,7 +108,7 @@ class TestFixtures(unittest.TestCase):
 
     def test_dual_header(self):
         table = '''
-            |name|
+            |SubmitOrders|
             |bid  |     |ask  |     |
             |qty  |price|price|qty  |
             |1,900| 82.0|83.0 |1,900|

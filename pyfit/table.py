@@ -1,5 +1,4 @@
 from xml.dom import minidom, Node
-#from fixtures import *
 
 class Cell(object):
     def __init__(self, data):
