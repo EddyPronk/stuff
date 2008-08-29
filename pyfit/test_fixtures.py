@@ -35,6 +35,9 @@ def CreateFixture(name):
     return globals()[name]()
 
 class Engine(object):
+    # return the next object in the flow or None.
+    # check if fixture has attribute with name of next table.
+    # if not create an instance with that name
     def process(self, table):
         name = table.name()
         fixture = CreateFixture(str(name))
@@ -47,6 +50,20 @@ class TestFixtures(unittest.TestCase):
 
     def process(self, wiki):
         return self.engine.process(Table(wiki_table_to_html(wiki)))
+
+    def testSignature(self):
+        class FooFixture(object):
+            def test_func(self, arg1, arg2):
+                self.called = True
+
+        fixture = FooFixture()
+        f = getattr(fixture, 'test_func')
+        
+        self.assert_(inspect.ismethod(f))
+        self.assertEqual(2, len(inspect.getargspec(f)[0]) - 1)
+        args = [1, 2]
+        f(*args)
+        self.assert_(fixture.called)
 
     def test_action_fixture(self):
         wiki = '''

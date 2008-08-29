@@ -2,26 +2,10 @@ import unittest
 from xml.dom import minidom, Node
 import re
 import sys
-import inspect
 from table import *
 from CalculateDiscount import *
-import traceback
 
 class TestTable(unittest.TestCase):
-
-    def testSignature(self):
-        class FooFixture(object):
-            def test_func(self, arg1, arg2):
-                self.called = True
-
-        fixture = FooFixture()
-        f = getattr(fixture, 'test_func')
-        
-        self.assert_(inspect.ismethod(f))
-        self.assertEqual(2, len(inspect.getargspec(f)[0]) - 1)
-        args = [1, 2]
-        f(*args)
-        self.assert_(fixture.called)
 
     def test_iterator_can_get_first_empty(self):
         html = '<table><tr><td></td></tr></table>'
@@ -160,7 +144,6 @@ class TestTable(unittest.TestCase):
         #print table.doc.toxml()
 
     def test_td_with_newline(self):
-        # I'm using deepest to get the text out.
         html = '<table><tr><td colspan="2">CalculateDiscount</td>\n</tr></table>'
         table = Table(html)
         self.assertEqual('CalculateDiscount', table.name())
@@ -191,7 +174,6 @@ class TestTable(unittest.TestCase):
         doc = Document(html)
         doc.visit_tables()
         html = doc.html()
-        #print html
         
     def test_flow(self):
         table = [1, 2, 3]
@@ -212,44 +194,3 @@ class TestTable(unittest.TestCase):
 
         x2(table)
 
-class Engine(object):
-    # return the next object in the flow or None.
-    # check if fixture has attribute with name of next table.
-    # if not create an instance with that name
- 
-   def process(self, table):
-        pass
-
-class TestTable2(unittest.TestCase):
-    def setUp(self):
-        self.engine = Engine()
-
-    def process(self, table):
-        self.engine.process(wiki_table_to_html(table))
-
-    def test_a(self):
-        self.process('|TradingStart|')
-
-class ImportError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
-class Importer(object):
-    
-    def do_import_module(self, module_name):
-        __import__(module_name)
-
-    def import_module(self, name):
-        try:
-            self.do_import_module(name)
-        except Exception, e:
-            raise ImportError(traceback.format_exc())
-
-class FakeImporter(Importer):
-    def do_import_module(self, name):
-        eval('import doesntexist')
-
-if __name__ == '__main__':
-    unittest.main()

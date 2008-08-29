@@ -29,7 +29,7 @@ class FakeImporter(Importer):
         eval(x)
         
 
-class TestTable2(unittest.TestCase):
+class TestImport(unittest.TestCase):
 
     def test_backtrace(self):
         imp = FakeImporter()
