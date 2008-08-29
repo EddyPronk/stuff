@@ -35,14 +35,39 @@ def CreateFixture(name):
     return globals()[name]()
 
 class Engine(object):
+    
     # return the next object in the flow or None.
     # check if fixture has attribute with name of next table.
     # if not create an instance with that name
+    def __init__(self):
+        self.fixture = None
     def process(self, table):
         name = table.name()
-        fixture = CreateFixture(str(name))
-        fixture.process(table)
-        return fixture
+        if self.fixture is None:
+            self.fixture = CreateFixture(str(name))
+        else:
+            try:
+                f = getattr(self.fixture, name)
+            except AttributeError, inst:
+                raise Exception("not found in current fixture.")
+            self.fixture = f()
+        
+        if self.fixture is None:
+            raise Exception("fixture '%s' not found." % name)
+        self.fixture.process(table)
+
+        return self.fixture
+
+class Two(object):
+    def process(self, table):
+        pass
+    
+class First(object):
+    def process(self, table):
+        pass
+
+    def Second(self):
+        return Two()
 
 class TestFixtures(unittest.TestCase):
     def setUp(self):
@@ -142,4 +167,14 @@ class TestFixtures(unittest.TestCase):
         f = '_'.join(words)
         self.assertEqual(f, 'local_user_creates_room')
 
+    def test_flow_mode(self):
+        wiki = '|First|'
+
+        fixture = self.process(wiki)
+
+        wiki = '|Second|'
+
+        fixture = self.process(wiki)
+
+        self.assertEqual(type(fixture), Two)
 
