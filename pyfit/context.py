@@ -69,13 +69,6 @@ class Engine(object):
 
         return self.fixture
 
-    def visit(self, table):
-        name = table.name()
-        #class_ = getattr(module, name)
-        #fixture = class_()
-        fixture = self.FixtureFactory(name)
-        fixture.process(table)
-
 class Context(object):
     def process(self, content):
         print 'content : [%s]' % content

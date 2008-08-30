@@ -119,5 +119,5 @@ class Document(object):
 
         for node in self.data.childNodes:
             if node.nodeName == 'table':
-                visitor.visit(Table(node))
+                visitor.process(Table(node))
 
