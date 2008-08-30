@@ -1,6 +1,7 @@
 import unittest
 from fixtures import *
 from table import *
+from context import *
 import traceback
 
 class FakeActionFixture(ActionFixture):
@@ -39,30 +40,6 @@ def CreateFixture(name):
         raise Exception("Could not create fixture '%s'" % name)
     return type()
 
-class Engine(object):
-    
-    # return the next object in the flow or None.
-    # check if fixture has attribute with name of next table.
-    # if not create an instance with that name
-    def __init__(self):
-        self.fixture = None
-    def process(self, table):
-        name = table.name()
-        if self.fixture is None:
-            self.fixture = CreateFixture(str(name))
-        else:
-            try:
-                f = getattr(self.fixture, name)
-                self.fixture = f()
-            except AttributeError, inst:
-                self.fixture = CreateFixture(str(name))
-        
-        if self.fixture is None:
-            raise Exception("fixture '%s' not found." % name)
-        self.fixture.process(table)
-
-        return self.fixture
-
 class Two(object):
     def process(self, table):
         pass
@@ -77,6 +54,7 @@ class First(object):
 class TestFixtures(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
+        self.engine.FixtureFactory = CreateFixture
 
     def process(self, wiki):
         return self.engine.process(Table(wiki_table_to_html(wiki)))

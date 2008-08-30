@@ -172,7 +172,7 @@ class TestTable(unittest.TestCase):
             '</table>\n'
 
         doc = Document(html)
-        doc.visit_tables()
+        #doc.visit_tables()
         html = doc.html()
         
     def test_flow(self):

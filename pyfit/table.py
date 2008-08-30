@@ -115,19 +115,9 @@ class Document(object):
             html += node.toxml()
         return html
 
-    def visit_tables(self):
+    def visit_tables(self, visitor):
 
         for node in self.data.childNodes:
             if node.nodeName == 'table':
-                table = Table(node)
-                name = table.name()
-                try:
-                    module = __import__(name)
-                except Exception, e:
-                    a = traceback.format_exc()
-                    print '{\n%s}' % str(a)
-                class_ = getattr(module, name)
-                fixture = class_()
-                #fixture = x(
-                fixture.process(table)
+                visitor.visit(Table(node))
 

@@ -34,11 +34,53 @@ output = '<span class="meta">variable defined: COMMAND_PATTERN=python2.5 %m %p</
     '</tr>\n' \
     '</table>\n'
 
+class Engine(object):
+    
+    # return the next object in the flow or None.
+    # check if fixture has attribute with name of next table.
+    # if not create an instance with that name
+    def __init__(self):
+        def DefaultFixtureFactory(name):
+            try:
+                module = __import__(name)
+            except Exception, e:
+                a = traceback.format_exc()
+                print '{\n%s}' % str(a)
+            class_ = getattr(module, name)
+            return class_()
+
+        self.FixtureFactory = DefaultFixtureFactory
+        self.fixture = None
+
+    def process(self, table):
+        name = table.name()
+        if self.fixture is None:
+            self.fixture = self.FixtureFactory(name)
+        else:
+            try:
+                f = getattr(self.fixture, name)
+                self.fixture = f()
+            except AttributeError, inst:
+                self.fixture = self.FixtureFactory(name)
+        
+        if self.fixture is None:
+            raise Exception("fixture '%s' not found." % name)
+        self.fixture.process(table)
+
+        return self.fixture
+
+    def visit(self, table):
+        name = table.name()
+        #class_ = getattr(module, name)
+        #fixture = class_()
+        fixture = self.FixtureFactory(name)
+        fixture.process(table)
+
 class Context(object):
     def process(self, content):
         print 'content : [%s]' % content
-
+        engine = Engine()
         doc = Document(content)
-        doc.visit_tables()
+        doc.visit_tables(engine)
         return str(doc.html())
 
