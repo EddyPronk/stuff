@@ -168,4 +168,62 @@ class TestFixtures(unittest.TestCase):
         fixture = self.process('|FakeActionFixture|')
         self.assertEqual(type(fixture), FakeActionFixture)
 
+    def test_collumn_group_fixture(self):
+
+        wiki = '''
+            |FakeCollumnFixture|
+            |outgoing |      |       |incoming |        |
+            |code     | qty  | price |status   | filled |
+            |BHP      | 5000 | 41.3  |New      | 4000   |
+            |ANZ      | 9000 | 16.1  |New      | 7000   |
+        '''
+
+        table = Table(wiki_table_to_html(wiki))
+        rows = table.rows()
+        row = rows.next()
+ 
+        l = []
+
+        class GroupCollumnFixture(object):
+
+            def process(self, table):
+                group_iter = iter(rows.next())
+                coll_iter = iter(rows.next())
+                coll = str(coll_iter.next())
+                group = str(group_iter.next())
+                self.element(group,coll)
+                for cell in group_iter:
+                    group_name = str(cell)
+                    coll = coll_iter.next()        
+                    if group_name is not '':
+                        self.group_done(group)
+                        group = group_name
+                    self.element(group,str(coll))
+                self.group_done(group)
+
+            def element(self, x,y):
+                #print (x,y)
+                attr = getattr(self, x)
+                # need partials here.
+                #setattr(attr, y, 'foo')
+
+            def group_done(self, group):
+                f = getattr(self, '%s_done' % group)
+                f()
+
+        class FakeGroupCollumnFixture(GroupCollumnFixture):
+            class Message(object) : pass
+
+            def __init__(self):
+                self.outgoing = self.Message()
+                self.outgoing.code = 'BHP'
+
+            def outgoing_done(self):
+                self.incoming = self.Message()
+
+            def incoming_done(self):
+                pass
+
+        fixture = FakeGroupCollumnFixture()
+        fixture.process(table)
 
