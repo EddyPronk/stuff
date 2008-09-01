@@ -184,9 +184,23 @@ class TestFixtures(unittest.TestCase):
  
         l = []
 
+        class SetGroupAttribute(object):
+            def __init__(self, name, group):
+                self.name = name
+                self.group = group
+            def apply(self, fixture, cell):
+                print 'set %s.%s to value [%s]' % (self.group, self.name, cell)
+                group = getattr(fixture, self.group)
+                setattr(group, self.name, str(cell))
+
         class GroupCollumnFixture(object):
 
+            def __init__(self):
+                pass
+
             def process(self, table):
+                self.desc = []
+
                 group_iter = iter(rows.next())
                 coll_iter = iter(rows.next())
                 coll = str(coll_iter.next())
@@ -201,9 +215,15 @@ class TestFixtures(unittest.TestCase):
                     self.element(group,str(coll))
                 self.group_done(group)
 
+                for row in rows:
+                    for (d, cell) in zip(self.desc, row):
+                        d.apply(self, cell)
+
+
             def element(self, x,y):
-                #print (x,y)
+                print (x,y)
                 attr = getattr(self, x)
+                self.desc.append(SetGroupAttribute(y,x))
                 # need partials here.
                 #setattr(attr, y, 'foo')
 
@@ -220,6 +240,7 @@ class TestFixtures(unittest.TestCase):
 
             def outgoing_done(self):
                 self.incoming = self.Message()
+                print self.outgoing.__dict__
 
             def incoming_done(self):
                 pass
