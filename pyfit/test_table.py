@@ -79,7 +79,7 @@ class TestTable(unittest.TestCase):
                 self.assertEqual(str(col), "50.0")
 
     def test_cell_can_pass(self):
-        cell = Cell(minidom.parseString('<table><tr><td>50.0</td></tr></table>').childNodes[0])
+        cell = Cell(minidom.parseString('<td>50.0</td>').childNodes[0])
         cell.passed()
         self.assertEqual('<td class="pass">50.0</td>', cell.data.toxml())
 
