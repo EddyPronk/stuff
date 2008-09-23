@@ -5,25 +5,23 @@ import inspect
 
 class ColumnFixture(object):
     def process(self, table):
-        rows = table.rows()
-        row = rows.next()
-        row = rows.next()
+        row = table.rows[1]
 
         desc = []
         for cell in row:
             #print 'cell [%s]' % str(cell)
             desc.append(parse_action(str(cell)))
 
-        for row in rows:
+        for row in table.rows[2:]:
             for (d, cell) in zip(desc, row):
                 d.apply(self, cell)
 
 class ActionFixture(object):
     def process(self, table):
-        rows = table.rows()
-        row = rows.next()
+        #rows = table.rows()
+        #row = rows.next()
 
-        for row in rows:
+        for row in table.rows[1:]:
             cells = RowIter(iter(row))
             for cell in cells:
                 cell = cells.next()
@@ -35,10 +33,7 @@ class ActionFixture(object):
 
 class DoFixture(object):
     def process(self, table):
-        rows = table.rows()
-        row = rows.next()
-
-        for row in rows:
+        for row in table.rows[1:]:
             cells = RowIter(iter(row))
             name = ''
             args = []

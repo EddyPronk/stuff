@@ -1,10 +1,28 @@
 from xml.dom import minidom, Node
 
+def create_table(domtree):
+    rows = []
+    for row in domtree.childNodes:
+        if row.nodeName == 'tr':
+            row_cells = []
+            for cell in row.childNodes:
+                if cell.nodeName == 'td':
+                    if cell.hasChildNodes():
+                        try:
+                            c = cell.childNodes[0]
+                            row_cells.append(Cell(cell))
+                        except IndexError, inst:
+                            print cell.__dict__
+                            print inst
+                    else:
+                        row_cells.append('')
+            rows.append(row_cells)
+    return rows
+
 class Cell(object):
     def __init__(self, data):
         self.data = data
-
-    def __str__(self):
+    def __repr__(self):
         def deepest(node):
             if node is not None:
                 if node.hasChildNodes():
@@ -46,7 +64,24 @@ class Cell(object):
         self.data.replaceChild(hr, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
 
-class RowDomIter(object):
+class OldCell(object):
+    def __init__(self, data):
+        self.data = data
+
+    def __str__(self):
+        def deepest(node):
+            if node is not None:
+                if node.hasChildNodes():
+                    return deepest(node.childNodes[0])
+                else:
+                    return node
+        d = deepest(self.data).nodeValue
+        if d == None:
+            return ''
+        return d
+
+
+class RowDomIter__(object):
     def __init__(self, data):
         self.data = data
     def __iter__(self):
@@ -98,9 +133,13 @@ class Table(object):
             self.data = self.doc.childNodes[0]
         else:
             self.data = data
-        
+ 
+        self.rows = create_table(self.data)
+       
+    def cell(self, col, row):
+        return self.rows[row][col]
 
-    def rows(self):
+    def rows__(self):
         def row_iter(row):
             for row in self.data.childNodes:
                 if row.nodeType == Node.ELEMENT_NODE:
@@ -108,10 +147,7 @@ class Table(object):
         return row_iter(self.data.childNodes)
 
     def name(self):
-        rows = self.rows()
-        row = rows.next()
-        it = RowIter(iter(row))
-        return str(it.next())
+        return str(self.rows[0][0])
 
 class Document(object):
     def __init__(self, data):

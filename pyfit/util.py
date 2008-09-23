@@ -15,7 +15,10 @@ class SetAttribute(object):
     def __init__(self, name):
         self.name = name
     def apply(self, fixture, cell):
-        setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
+        try:
+            setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
+        except AttributeError, e:
+            cell.error(e)
 
 def parse_action(action_desc):
     res = re.search('(.*)\(\)', action_desc)
@@ -54,7 +57,7 @@ def wiki_table_to_html(table):
 def rzip(a,b):
     prev = ''
     for x,y in zip(a,b):
-        if str(x) == '':
+        if x == '':
             x = prev
         prev = x
         yield (x,y)
