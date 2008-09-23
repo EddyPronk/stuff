@@ -1,4 +1,4 @@
-from table import *
+#from table import *
 from fixtures import *
 
 

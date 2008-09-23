@@ -17,8 +17,9 @@ class SetAttribute(object):
     def apply(self, fixture, cell):
         try:
             setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
-        except AttributeError, e:
-            cell.error(e)
+        except AttributeError, inst:
+            #print e
+            cell.error(str(inst))
 
 def parse_action(action_desc):
     res = re.search('(.*)\(\)', action_desc)
@@ -54,6 +55,7 @@ def wiki_table_to_html(table):
     output += "</table>"
     return output
 
+
 def rzip(a,b):
     prev = ''
     for x,y in zip(a,b):
@@ -61,6 +63,19 @@ def rzip(a,b):
             x = prev
         prev = x
         yield (x,y)
+
+class RowIter(object):
+    def __init__(self, iter):
+        self.iter = iter
+    def __iter__(self):
+        return self
+    def next(self):
+        return self.iter.next()
+    def get(self, n):
+        result = []
+        for i in range(0, n):
+            result.append(str(self.next()))
+        return result
 
 
         

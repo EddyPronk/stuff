@@ -56,6 +56,8 @@ class Cell(object):
         self.data.appendChild(actual)
 
     def error(self, message):
+        self.error_message = message
+        #print self.__dict__
         self.data.setAttribute("class", "error")
         doc = self.data.ownerDocument
         hr = doc.createElement("hr")
@@ -105,19 +107,6 @@ class RowDomIter__(object):
             self.data = None
         #print cell.data.__dict__
         return cell
-
-class RowIter(object):
-    def __init__(self, iter):
-        self.iter = iter
-    def __iter__(self):
-        return self
-    def next(self):
-        return self.iter.next()
-    def get(self, n):
-        result = []
-        for i in range(0, n):
-            result.append(str(self.next()))
-        return result
 
 class Row(object):
     def __init__(self, data):

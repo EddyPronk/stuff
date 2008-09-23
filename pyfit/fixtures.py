@@ -1,6 +1,6 @@
 import unittest
 from util import *
-from table import *
+#from table import *
 import inspect
 
 class ColumnFixture(object):

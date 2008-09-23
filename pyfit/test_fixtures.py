@@ -2,6 +2,7 @@ import unittest
 from fixtures import *
 from table import *
 from context import *
+from table import *
 import traceback
 
 class FakeActionFixture(ActionFixture):
