@@ -79,21 +79,22 @@ class TestTable(unittest.TestCase):
                 self.assertEqual(str(col), "50.0")
 
     def test_cell_can_pass(self):
-        html = '<table><tr><td>50.0</td></tr></table>'
-        table = Table(html)
-        row = iter(table.rows()).next()
-        col = iter(row).next()
-        col.passed()
-        self.assertEqual('<td class="pass">50.0</td>', col.data.toxml())
+        cell = Cell(minidom.parseString('<table><tr><td>50.0</td></tr></table>').childNodes[0])
+        cell.passed()
+        self.assertEqual('<td class="pass">50.0</td>', cell.data.toxml())
 
     def test_cell_can_fail(self):
-        html = '<table><tr><td>50.0</td></tr></table>'
-        table = Table(html)
-        row = iter(table.rows()).next()
-        col = iter(row).next()
-        col.failed(49.5)
+        cell = Cell(minidom.parseString('<td>50.0</td>').childNodes[0])
+        cell.failed(49.5)
         self.assertEqual('<td class="fail">49.5 <span class="fit_label">expected</span><hr>50.0 </hr>'
-                         '<span class="fit_label">actual</span></td>', col.data.toxml())
+                         '<span class="fit_label">actual</span></td>', cell.data.toxml())
+
+    def test_cell_can_have_error(self):
+        cell = Cell(minidom.parseString('<td>amount</td>').childNodes[0])
+        cell.error('some message')
+        self.assertEqual(
+            '<td class="error">amount<hr>some message</hr></td>',
+            str(cell.data.toxml()))
 
     def test_iterator_can_get_n_fields(self):
         html = '<table>' \

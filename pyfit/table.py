@@ -37,6 +37,15 @@ class Cell(object):
         self.data.insertBefore(value, self.data.childNodes[0])
         self.data.appendChild(actual)
 
+    def error(self, message):
+        self.data.setAttribute("class", "error")
+        doc = self.data.ownerDocument
+        hr = doc.createElement("hr")
+        hr.appendChild(doc.createTextNode(str(message)))
+        value = doc.createTextNode(self.data.childNodes[0].nodeValue)
+        self.data.replaceChild(hr, self.data.childNodes[0])
+        self.data.insertBefore(value, self.data.childNodes[0])
+
 class RowDomIter(object):
     def __init__(self, data):
         self.data = data
