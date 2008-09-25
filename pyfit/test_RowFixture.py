@@ -1,7 +1,9 @@
 import unittest
 from fixtures import *
 from context import *
+
 from plaintypes import Cell, Table
+
 
 def CreateFixture(name):
     try:
@@ -85,5 +87,4 @@ class TestRowFixture2(unittest.TestCase):
         fixture = self.process(wiki)
         self.assertEqual(fixture.differ.missing, [])
         self.assertEqual(fixture.differ.surplus, [['luke', 'lotr']])
-        
-
+        self.assertEqual(len(self.table.rows), 4)

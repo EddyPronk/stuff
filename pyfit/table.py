@@ -1,8 +1,8 @@
 from xml.dom import minidom, Node
 
-def create_table(domtree):
+def create_table(znode):
     rows = []
-    for row in domtree.childNodes:
+    for row in znode.childNodes:
         if row.nodeName == 'tr':
             row_cells = []
             for cell in row.childNodes:

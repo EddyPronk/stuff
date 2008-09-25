@@ -28,3 +28,6 @@ class Table(object):
     def name(self):
         return str(self.rows[0][0])
 
+    def append_row(self, row):
+        self.rows.append(row)
+

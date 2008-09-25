@@ -1,6 +1,7 @@
 #from table import *
 from fixtures import *
-from table import *
+
+#from table import *
 
 class Engine(object):
     
