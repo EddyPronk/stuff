@@ -1,6 +1,7 @@
 import unittest
 from util import *
 import inspect
+from differ import Differ
 
 class ColumnFixture(object):
     def process(self, table):
@@ -61,7 +62,14 @@ class RowFixture(object):
         
     def process(self, table):
         self.column_names = [str(x) for x in table.rows[1]]
-        list = self.query()
-        #print_table(table.rows[2:])
-        #print_table(list)
+        computed = self.collect()
+        expected = table.rows[2:]
+
+        def compare(expected,calculated):
+            for e,c in zip(expected, calculated):
+                if str(e) != c:
+                    e.failed(c)
+
+        self.differ = Differ(compare)
+        self.differ.match(expected, computed, 0)
 

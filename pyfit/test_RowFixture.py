@@ -10,8 +10,12 @@ def CreateFixture(name):
         raise Exception("Could not create fixture '%s'" % name)
     return type()
 
-class OccupantList1(RowFixture):
-    
+class OccupantList(RowFixture):
+    def query(self):
+        return [ {'user': 'anna', 'room': 'lotr'},
+                 {'user': 'luke', 'room': 'lotr'} ]
+
+class OccupantList2(RowFixture):
     def query(self):
         result = []
         
@@ -23,25 +27,15 @@ class OccupantList1(RowFixture):
         result.append(a)
         return result
 
-class OccupantList2(RowFixture):
-    
-    def query(self):
-        result = []
-        
-        a = {'user': 'anna', 'room': 'lotr'}
-        
-        result.append(a)
-        return result
-
 class TestRowFixture1(unittest.TestCase):
 
-    def test_with_objects(self):
-        fixture = OccupantList1()
+    def test_with_dict(self):
+        fixture = OccupantList()
         fixture.column_names = ['user', 'room']
         result = fixture.collect()
-        self.assertEqual(result, [['anna', 'lotr']])
+        self.assertEqual(result, [['anna', 'lotr'], ['luke', 'lotr']])
 
-    def test_with_dict(self):
+    def test_with_objects(self):
         fixture = OccupantList2()
         fixture.column_names = ['user', 'room']
         result = fixture.collect()
@@ -51,7 +45,6 @@ class TestRowFixture2(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
         self.engine.FixtureFactory = CreateFixture
-        pass
 
     def process(self, wiki):
         self.table = Table(wiki_table_to_plain(wiki))
@@ -59,12 +52,13 @@ class TestRowFixture2(unittest.TestCase):
 
     def test_existing_attribute(self):
         wiki = '''
-            |OccupantList1|
+            |OccupantList|
             |user |room |
             |anna |lotr |
             |luke |lotr |
         '''
 
         fixture = self.process(wiki)
+        self.assertEqual(fixture.differ.surplus, [])
         
 
