@@ -24,7 +24,7 @@ class TestDiffer(unittest.TestCase):
         self.assertEqual(cell.expected, 'shrek')
         self.assertEqual(cell.actual,   'lotr')
 
-    def test_one_missing(self):
+    def test_one_missing_row(self):
         computed = [['anna', 'lotr']]
         expected = [['anna', 'shrek'],
                     ['luke', 'lotr']]

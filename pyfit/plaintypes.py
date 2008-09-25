@@ -5,6 +5,9 @@ class Cell(object):
     def __repr__(self):
         return self.expected
 
+    def __eq__(self, other):
+        return self.expected == other.expected
+
     def passed(self):
         self.has_passed = True
 
