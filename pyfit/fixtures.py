@@ -72,5 +72,7 @@ class RowFixture(object):
 
         self.differ = Differ(compare)
         self.differ.match(expected, computed, 0)
+        for row in self.differ.missing:
+            row[0].missing()
         for row in self.differ.surplus:
             table.rows.append(row)

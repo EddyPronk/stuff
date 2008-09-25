@@ -64,7 +64,7 @@ class TestRowFixture2(unittest.TestCase):
         self.assertEqual(fixture.differ.missing, [])
         self.assertEqual(fixture.differ.surplus, [])
 
-    def test_one_surplus_row(self):
+    def test_one_missing_row(self):
         wiki = '''
             |OccupantList|
             |user |room |
@@ -76,8 +76,9 @@ class TestRowFixture2(unittest.TestCase):
         fixture = self.process(wiki)
         self.assertEqual(fixture.differ.missing, [[Cell('bob'), Cell('lotr')]])
         self.assertEqual(fixture.differ.surplus, [])
+        self.assert_(self.table.cell(0,4).is_missing)
 
-    def test_one_missing_row(self):
+    def test_one_surplus_row(self):
         wiki = '''
             |OccupantList|
             |user |room |

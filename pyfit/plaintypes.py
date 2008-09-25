@@ -18,6 +18,9 @@ class Cell(object):
     def error(self, message):
         self.error_message = message
 
+    def missing(self):
+        self.is_missing = True
+
 class Table(object):
     def __init__(self, rows):
         self.rows = rows
