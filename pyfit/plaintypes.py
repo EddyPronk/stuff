@@ -1,16 +1,16 @@
 class Cell(object):
     def __init__(self, data):
-        self.data = data
+        self.expected = data
 
     def __repr__(self):
-        return self.data
+        return self.expected
 
     def passed(self):
         self.has_passed = True
 
-    def failed(self, actual_value):
+    def failed(self, actual):
         self.has_failed = True
-        self.actual_value = actual_value
+        self.actual = actual
 
     def error(self, message):
         self.error_message = message

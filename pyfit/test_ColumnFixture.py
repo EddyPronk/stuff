@@ -54,7 +54,7 @@ class TestColumnFixture(unittest.TestCase):
         fixture = self.process(wiki)
         cell = self.table.cell(2,2)
         self.assert_(cell.has_failed)
-        self.assertEqual(cell.actual_value, 30.0)
+        self.assertEqual(cell.actual, 30.0)
 
     def test_passing_test(self):
         wiki = '''

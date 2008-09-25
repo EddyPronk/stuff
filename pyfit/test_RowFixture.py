@@ -68,7 +68,6 @@ class TestRowFixture2(unittest.TestCase):
         fixture = self.process(wiki)
         
 class Differ(object):
-
     def __init__(self, compare):
         self.compare = compare
         self.missing = []
@@ -94,13 +93,13 @@ class Differ(object):
 
     def ePartition(self, rows, col, map):
         for row in rows:
-            key = row[0]
+            key = str(row[0])
             self.insureKeyExists(map, key)
             map[key][0].append(row)
 
     def cPartition(self, rows, col, map):
         for row in rows:
-            key = str(row[0])
+            key = row[0]
             self.insureKeyExists(map, key)
             map[key][1].append(row)
 
@@ -119,19 +118,21 @@ def compare(e,c):
 class TestTableDiff(unittest.TestCase):
 
     def test_two_rows_with_difference(self):
-        computed = [[Cell('anna'), Cell('lotr')],
-                    [Cell('luke'), Cell('lotr')]]
-        expected = [['anna', 'shrek'],
+        computed = [['anna', 'lotr'],
                     ['luke', 'lotr']]
+        expected = [[Cell('anna'), Cell('shrek')],
+                    [Cell('luke'), Cell('lotr')]]
         
-        def compare(e,c):
-            for x,y in zip(e,c):
-                if x != str(y):
-                    y.failed(x)
+        def compare(expected,calculated):
+            for e,c in zip(expected, calculated):
+                if str(e) != c:
+                    e.failed(c)
 
         differ = Differ(compare)
         differ.match(expected, computed, 0)
-        self.assert_(computed[0][1].actual_value, 'shrek')
+        cell = expected[0][1]
+        self.assertEqual(cell.expected, 'shrek')
+        self.assertEqual(cell.actual,   'lotr')
 
     def test_one_missing(self):
         computed = [['anna', 'lotr']]
