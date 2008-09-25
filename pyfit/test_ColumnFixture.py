@@ -16,19 +16,6 @@ class FakeColumnFixture(ColumnFixture):
     def sum(self):
         return self.arg1 + self.arg2
 
-def wiki_table_to_plain(table):
-    output = "<table>"
-    rows = []
-    for line in table.split('\n'):
-        row = line.lstrip().split('|')[1:-1]
-        if len(row):
-            cells = []
-            for cell in row:
-                cells.append(Cell(cell.lstrip().rstrip()))
-            rows.append(cells)
-    output += "</table>"
-    return rows
-
 class TestColumnFixture(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
@@ -47,9 +34,12 @@ class TestColumnFixture(unittest.TestCase):
         '''
 
         fixture = self.process(wiki)
+
+        # These are float because this is the type in the fixture
         self.assertEqual(fixture.arg1, 20.0)
         self.assertEqual(fixture.arg2, 10.0)
-        #print self.table.data.toxml()
+
+        # These are string
         self.assertEqual(str(self.table.cell(0,2)), '20')
         self.assertEqual(str(self.table.cell(1,2)), '10')
         self.assertEqual(str(self.table.cell(2,2)), '35')
@@ -62,8 +52,9 @@ class TestColumnFixture(unittest.TestCase):
         '''
 
         fixture = self.process(wiki)
-        self.assert_(self.table.cell(2,2).has_failed)
-        self.assertEqual(self.table.cell(2,2).actual_value, 30.0)
+        cell = self.table.cell(2,2)
+        self.assert_(cell.has_failed)
+        self.assertEqual(cell.actual_value, 30.0)
 
     def test_passing_test(self):
         wiki = '''
@@ -73,7 +64,8 @@ class TestColumnFixture(unittest.TestCase):
         '''
 
         fixture = self.process(wiki)
-        self.assert_(self.table.cell(2,2).has_failed)
+        cell = self.table.cell(2,2)
+        self.assert_(cell.has_failed)
 
     def test_non_existing_attribute(self):
         wiki = '''

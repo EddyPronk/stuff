@@ -56,8 +56,6 @@ class Cell(object):
         self.data.appendChild(actual)
 
     def error(self, message):
-        self.error_message = message
-        #print self.__dict__
         self.data.setAttribute("class", "error")
         doc = self.data.ownerDocument
         hr = doc.createElement("hr")

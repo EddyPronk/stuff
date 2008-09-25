@@ -1,6 +1,5 @@
 import unittest
 from util import *
-#from table import *
 import inspect
 
 class ColumnFixture(object):
@@ -9,7 +8,6 @@ class ColumnFixture(object):
 
         desc = []
         for cell in row:
-            #print 'cell [%s]' % str(cell)
             desc.append(parse_action(str(cell)))
 
         for row in table.rows[2:]:
@@ -46,4 +44,24 @@ class DoFixture(object):
                     pass
             f = getattr(self, name)
             f(*args)
+
+class RowFixture(object):
+    def collect(self):
+        result = self.query()
+        out_result = []
+
+        for row in result:
+            if type(row) == dict:
+                x = [row.get(attr) for attr in self.column_names]
+            else:
+                x = [getattr(row, attr) for attr in self.column_names]
+                
+            out_result.append(x)
+        return out_result
+        
+    def process(self, table):
+        self.column_names = [str(x) for x in table.rows[1]]
+        list = self.query()
+        #print_table(table.rows[2:])
+        #print_table(list)
 
