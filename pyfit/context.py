@@ -1,7 +1,8 @@
 #from table import *
 from fixtures import *
 
-#from table import *
+from table import *
+import traceback
 
 class Engine(object):
     
@@ -34,7 +35,12 @@ class Engine(object):
         
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
-        self.fixture.process(table)
+
+        try:
+            self.fixture.process(table)
+        except Exception, inst:
+            '''Fixme: Should the rest of the table become grey?'''
+            table.cell(0,0).error(inst)
 
         return self.fixture
 

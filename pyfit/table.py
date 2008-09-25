@@ -151,6 +151,16 @@ class Table(object):
     def name(self):
         return str(self.rows[0][0])
 
+    def append_row(self, row):
+        doc = self.data.ownerDocument
+        tr = doc.createElement("tr")
+        for cell in row:
+            td = doc.createElement("td")
+            td.appendChild(doc.createTextNode(cell))
+            tr.appendChild(td)
+        self.data.appendChild(tr)
+        Cell(tr.childNodes[0]).surplus()
+
 class Document(object):
     def __init__(self, data):
         self.doc = minidom.parseString('<doc>\n' + data + '</doc>\n')

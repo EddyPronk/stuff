@@ -5,7 +5,7 @@ class TestCell(unittest.TestCase):
     def test_operators(self):
         self.assertEqual(Cell('bob'), Cell('bob'))
 
-class TestTable(unittest.TestCase):
+class TestPlainTable(unittest.TestCase):
     def test_adding_row(self):
         table = Table([[]])
         table.append_row(['anna', 'lotr']) 

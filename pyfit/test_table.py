@@ -93,6 +93,13 @@ class TestTable(unittest.TestCase):
             '<td class="error">amount<hr>some message</hr></td>',
             str(cell.data.toxml()))
 
+    def test_adding_row(self):
+        html = '<table><tr><td>name</td><td>room</td></tr></table>'
+        table = Table(html)
+        table.append_row(['anna', 'lotr']) 
+        #print table.data.toxml()
+        #self.assertEqual(table.rows, [ [], ['anna', 'lotr'] ]) 
+
     def _test_iterator_can_get_n_fields(self):
         html = '<table>' \
             '<tr><td>add</td>' \
