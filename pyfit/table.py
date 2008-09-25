@@ -44,16 +44,16 @@ class Cell(object):
         expected = doc.createElement("span")
         expected.appendChild(doc.createTextNode("expected"))
         expected.setAttribute("class", "fit_label")
-        actual = doc.createElement("span")
-        actual.appendChild(doc.createTextNode("actual"))
-        actual.setAttribute("class", "fit_label")
+        span = doc.createElement("span")
+        span.appendChild(doc.createTextNode("actual"))
+        span.setAttribute("class", "fit_label")
         hr = doc.createElement("hr")
         hr.appendChild(doc.createTextNode(str(expected_value) + ' '))
         self.data.replaceChild(hr, self.data.childNodes[0])
         value = doc.createTextNode(str(actual_value) + ' ')
         self.data.insertBefore(expected, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
-        self.data.appendChild(actual)
+        self.data.appendChild(span)
 
     def error(self, message):
         self.data.setAttribute("class", "error")
@@ -63,6 +63,21 @@ class Cell(object):
         value = doc.createTextNode(self.data.childNodes[0].nodeValue)
         self.data.replaceChild(hr, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
+
+    def missing(self):
+        self.mark('missing')
+
+    def surplus(self):
+        self.mark('surplus')
+
+    def mark(self, text):
+        doc = self.data.ownerDocument
+        self.data.childNodes[0].nodeValue += ' '
+        self.data.setAttribute("class", "fail")
+        span = doc.createElement("span")
+        span.appendChild(doc.createTextNode(text))
+        span.setAttribute("class", "fit_label")
+        self.data.appendChild(span)
 
 class OldCell(object):
     def __init__(self, data):

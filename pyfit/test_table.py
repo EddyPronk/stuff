@@ -74,6 +74,18 @@ class TestTable(unittest.TestCase):
         self.assertEqual('<td class="fail">49.5 <span class="fit_label">expected</span><hr>50.0 </hr>'
                          '<span class="fit_label">actual</span></td>', cell.data.toxml())
 
+    def test_cell_can_be_missing(self):
+        cell = Cell(minidom.parseString('<td>50.0</td>').childNodes[0])
+        cell.missing()
+        self.assertEqual('<td class="fail">50.0 <span class="fit_label">missing</span></td>',
+                         cell.data.toxml())
+
+    def test_cell_can_be_surplus(self):
+        cell = Cell(minidom.parseString('<td>50.0</td>').childNodes[0])
+        cell.surplus()
+        self.assertEqual('<td class="fail">50.0 <span class="fit_label">surplus</span></td>',
+                         cell.data.toxml())
+
     def test_cell_can_have_error(self):
         cell = Cell(minidom.parseString('<td>amount</td>').childNodes[0])
         cell.error('some message')
