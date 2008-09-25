@@ -4,6 +4,7 @@ import unittest
 from test_table import *
 from test_import import *
 from test_fixtures import *
+from test_differ import *
 from test_ColumnFixture import *
 from test_RowFixture import *
 
