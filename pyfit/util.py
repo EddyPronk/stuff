@@ -1,5 +1,5 @@
 import re
-#import plaintypes 
+import traceback
 
 class MethodCall(object):
     def __init__(self, name):
@@ -82,6 +82,26 @@ def print_table(table):
     print
     for row in table:
         print '|' + '|'.join([str(x) for x in row]) + '|'
+
+class ImportError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Importer(object):
+    
+    def do_import_module(self, module_name):
+        __import__(module_name)
+
+    def import_module(self, name):
+        try:
+            self.do_import_module(name)
+        except Exception, e:
+            tb = traceback.format_exc()
+            lines = tb.split('\n')
+            str = '\n' + lines[0] + '\n' + '\n'.join(lines[5:])
+            raise ImportError(str)
 
 
         
