@@ -17,9 +17,6 @@ class ColumnFixture(object):
 
 class ActionFixture(object):
     def process(self, table):
-        #rows = table.rows()
-        #row = rows.next()
-
         for row in table.rows[1:]:
             cells = RowIter(iter(row))
             for cell in cells:

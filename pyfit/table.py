@@ -1,8 +1,8 @@
 from xml.dom import minidom, Node
 
-def create_table(znode):
+def create_table(node):
     rows = []
-    for row in znode.childNodes:
+    for row in node.childNodes:
         if row.nodeName == 'tr':
             row_cells = []
             for cell in row.childNodes:
@@ -22,6 +22,7 @@ def create_table(znode):
 class Cell(object):
     def __init__(self, data):
         self.data = data
+        self.doc = data.ownerDocument
     def __repr__(self):
         def deepest(node):
             if node is not None:
@@ -37,23 +38,25 @@ class Cell(object):
     def passed(self):
         self.data.setAttribute("class", "pass")
 
+    def tag(self, text):
+        node = self.doc.createElement("span")
+        node.appendChild(self.doc.createTextNode(text))
+        node.setAttribute("class", "fit_label")
+        return node
+
     def failed(self, actual_value):
         self.data.setAttribute("class", "fail")
         expected_value = self.data.childNodes[0].nodeValue
         doc = self.data.ownerDocument
-        expected = doc.createElement("span")
-        expected.appendChild(doc.createTextNode("expected"))
-        expected.setAttribute("class", "fit_label")
-        span = doc.createElement("span")
-        span.appendChild(doc.createTextNode("actual"))
-        span.setAttribute("class", "fit_label")
+        expected = self.tag("expected")
+        actual = self.tag("actual")
         hr = doc.createElement("hr")
         hr.appendChild(doc.createTextNode(str(expected_value) + ' '))
         self.data.replaceChild(hr, self.data.childNodes[0])
         value = doc.createTextNode(str(actual_value) + ' ')
         self.data.insertBefore(expected, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
-        self.data.appendChild(span)
+        self.data.appendChild(actual)
 
     def error(self, message):
         self.data.setAttribute("class", "error")
@@ -74,10 +77,8 @@ class Cell(object):
         doc = self.data.ownerDocument
         self.data.childNodes[0].nodeValue += ' '
         self.data.setAttribute("class", "fail")
-        span = doc.createElement("span")
-        span.appendChild(doc.createTextNode(text))
-        span.setAttribute("class", "fit_label")
-        self.data.appendChild(span)
+        tag = self.tag(text)
+        self.data.appendChild(tag)
 
 class OldCell(object):
     def __init__(self, data):
@@ -118,7 +119,6 @@ class RowDomIter__(object):
                 self.data = None
         else:
             self.data = None
-        #print cell.data.__dict__
         return cell
 
 class Row(object):
