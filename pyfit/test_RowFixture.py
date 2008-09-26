@@ -2,6 +2,7 @@ import unittest
 from context import *
 from plaintypes import *
 from RowFixture import RowFixture
+from engines import Engine
 
 def CreateFixture(name):
     try:

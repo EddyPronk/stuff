@@ -3,6 +3,7 @@ from fixtures import *
 from context import *
 from plaintypes import *
 from ColumnFixture import ColumnFixture
+from engines import Engine
 
 def CreateFixture(name):
     try:
