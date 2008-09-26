@@ -1,9 +1,7 @@
 import unittest
-from fixtures import *
 from context import *
-
-from plaintypes import Cell, Table
-
+from plaintypes import *
+from RowFixture import RowFixture
 
 def CreateFixture(name):
     try:

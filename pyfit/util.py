@@ -1,5 +1,5 @@
 import re
-import plaintypes 
+#import plaintypes 
 
 class MethodCall(object):
     def __init__(self, name):
@@ -77,19 +77,6 @@ class RowIter(object):
         for i in range(0, n):
             result.append(str(self.next()))
         return result
-
-def wiki_table_to_plain(table):
-    output = "<table>"
-    rows = []
-    for line in table.split('\n'):
-        row = line.lstrip().split('|')[1:-1]
-        if len(row):
-            cells = []
-            for cell in row:
-                cells.append(plaintypes.Cell(cell.lstrip().rstrip()))
-            rows.append(cells)
-    output += "</table>"
-    return rows
 
 def print_table(table):
     print

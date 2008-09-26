@@ -1,4 +1,4 @@
-from fixtures import ColumnFixture
+from ColumnFixture import ColumnFixture
 
 class CalculateDiscount(ColumnFixture):
 

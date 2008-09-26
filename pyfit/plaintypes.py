@@ -34,3 +34,14 @@ class Table(object):
     def append_row(self, row):
         self.rows.append(row)
 
+def wiki_table_to_plain(table):
+    rows = []
+    for line in table.split('\n'):
+        row = line.lstrip().split('|')[1:-1]
+        if len(row):
+            cells = []
+            for cell in row:
+                cells.append(Cell(cell.lstrip().rstrip()))
+            rows.append(cells)
+    return rows
+

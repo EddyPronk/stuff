@@ -1,7 +1,8 @@
 import unittest
 from fixtures import *
 from context import *
-from plaintypes import Cell, Table
+from plaintypes import *
+from ColumnFixture import ColumnFixture
 
 def CreateFixture(name):
     try:
@@ -11,8 +12,9 @@ def CreateFixture(name):
     return type()
 
 class FakeColumnFixture(ColumnFixture):
-    arg1 = 0.0
-    arg2 = 0.0
+    def __init__(self):
+        self.arg1 = 0.0
+        self.arg2 = 0.0
     def sum(self):
         return self.arg1 + self.arg2
 
@@ -20,7 +22,6 @@ class TestColumnFixture(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
         self.engine.FixtureFactory = CreateFixture
-        pass
 
     def process(self, wiki):
         self.table = Table(wiki_table_to_plain(wiki))
