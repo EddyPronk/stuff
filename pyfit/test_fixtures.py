@@ -35,13 +35,6 @@ class TradingStart(object):
     def run(self):
         pass
 
-def CreateFixture(name):
-    try:
-        type = globals()[name]
-    except KeyError, inst:
-        raise Exception("Could not create fixture '%s'" % name)
-    return type()
-
 class Two(object):
     def process(self, table):
         pass
@@ -56,7 +49,7 @@ class First(object):
 class TestFixtures(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
-        self.engine.FixtureFactory = CreateFixture
+        self.engine.loader = CreateFixture(globals())
 
     def process(self, wiki):
         return self.engine.process(Table(wiki_table_to_html(wiki)))

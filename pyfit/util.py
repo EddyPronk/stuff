@@ -103,5 +103,14 @@ class Importer(object):
             str = '\n' + lines[0] + '\n' + '\n'.join(lines[5:])
             raise ImportError(str)
 
+class CreateFixture(object):
+    def __init__(self, globals):
+        self.globals = globals
 
+    def load(self, name):
+        try:
+            type = self.globals[name]
+        except KeyError, inst:
+            raise Exception("Could not create fixture '%s'" % name)
+        return type()
         

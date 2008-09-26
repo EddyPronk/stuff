@@ -5,13 +5,6 @@ from plaintypes import *
 from ColumnFixture import ColumnFixture
 from engines import Engine
 
-def CreateFixture(name):
-    try:
-        type = globals()[name]
-    except KeyError, inst:
-        raise Exception("Could not create fixture '%s'" % name)
-    return type()
-
 class FakeColumnFixture(ColumnFixture):
     def __init__(self):
         self.arg1 = 0.0
@@ -22,7 +15,7 @@ class FakeColumnFixture(ColumnFixture):
 class TestColumnFixture(unittest.TestCase):
     def setUp(self):
         self.engine = Engine()
-        self.engine.FixtureFactory = CreateFixture
+        self.engine.loader = CreateFixture(globals())
 
     def process(self, wiki):
         self.table = Table(wiki_table_to_plain(wiki))

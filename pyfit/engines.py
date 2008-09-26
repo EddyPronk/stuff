@@ -1,33 +1,34 @@
 import traceback
 from util import *
 
+class DefaultLoader(object):
+    def load(name):
+        try:
+            module = __import__(name)
+        except ImportError, inst:
+            a = traceback.format_exc()
+            print '{\n%s}' % inst.value
+        class_ = getattr(module, name)
+        return class_()
+
 class Engine(object):
     
     # return the next object in the flow or None.
     # check if fixture has attribute with name of next table.
     # if not create an instance with that name
     def __init__(self):
-        def DefaultFixtureFactory(name):
-            try:
-                module = __import__(name)
-            except ImportError, inst:
-                a = traceback.format_exc()
-                print '{\n%s}' % inst.value
-            class_ = getattr(module, name)
-            return class_()
-
-        self.FixtureFactory = DefaultFixtureFactory
+        self.loader = DefaultLoader()
         self.fixture = None
 
     def load_fixture(self, name):
         if self.fixture is None:
-            self.fixture = self.FixtureFactory(name)
+            self.fixture = self.loader.load(name)
         else:
             try:
                 f = getattr(self.fixture, name)
                 self.fixture = f()
             except AttributeError, inst:
-                self.fixture = self.FixtureFactory(name)
+                self.fixture = self.loader.load(name)
         
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
