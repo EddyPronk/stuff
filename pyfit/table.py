@@ -176,5 +176,5 @@ class Document(object):
 
         for node in self.data.childNodes:
             if node.nodeName == 'table':
-                visitor.process(Table(node))
+                visitor.process(Table(node), throw=False)
 

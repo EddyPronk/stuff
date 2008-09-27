@@ -2,15 +2,25 @@ import traceback
 from util import *
 
 class DefaultLoader(object):
-    def load(name):
+    def load(self, name):
         try:
-            module = __import__(name)
+            module = self.do_load(name)
         except ImportError, inst:
             a = traceback.format_exc()
             print '{\n%s}' % inst.value
         class_ = getattr(module, name)
         return class_()
 
+    def do_load(self, name):
+        return __import__(name)
+
+class StringLoader(DefaultLoader):
+    def __init__(self, script):
+        self.script = script
+    def do_load(self, name):
+        x = compile(self.script, 'not_a_file.py', 'exec')
+        eval(x)
+            
 class Engine(object):
     
     # return the next object in the flow or None.
@@ -33,17 +43,22 @@ class Engine(object):
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
 
-    def process(self, table):
+    def do_process(self, table):
         name = table.name()
         self.load_fixture(name)
         self.fixture.process(table)
+
+    def process(self, table, throw = True):
+        name = table.name()
         
-        def do_process(self,table):
+        if throw == True:
+            self.do_process(table)
+        else:
             try:
-                self.fixture.process(table)
+                self.do_process(table)
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
                 table.cell(0,0).error(inst)
-
+        
         return self.fixture
 

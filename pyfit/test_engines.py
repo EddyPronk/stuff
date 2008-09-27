@@ -1,15 +1,30 @@
 import unittest
-from engines import Engine
+from engines import Engine, StringLoader
+from plaintypes import *
 
 class TestEngines(unittest.TestCase):
 
     def test_action_fixture(self):
         engine = Engine()
-        #engine.load_fixture('SomeQuery')
+        engine.loader = StringLoader('import doesntexist\n')
+        try:
+            engine.load_fixture('SomeQuery')
+        except ImportError, inst:
+            pass
 
-        def importer(text):
-            x = compile('import doesntexist\n', 'not_a_file.py', 'exec')
-            eval(x)
+        self.assertEqual(str(inst), 'No module named doesntexist')
 
-#print type(engine.fixture)
+    def test_input_table(self):
 
+        engine = Engine()
+        engine.loader = StringLoader('import doesntexist\n')
+
+        wiki = '''
+            |OccupantList|
+            |user |room |
+            |anna |lotr |
+            |luke |lotr |
+        '''
+
+        table = Table(wiki_table_to_plain(wiki))
+        engine.process(table, throw=False)
