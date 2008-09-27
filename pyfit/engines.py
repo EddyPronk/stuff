@@ -48,7 +48,7 @@ class Engine(object):
         self.load_fixture(name)
         self.fixture.process(table)
 
-    def process(self, table, throw = True):
+    def process(self, table, throw = True, print_traceback = False):
         name = table.name()
         
         if throw == True:
@@ -59,6 +59,12 @@ class Engine(object):
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
                 table.cell(0,0).error(inst)
+
+                if print_traceback:
+                    print 'Processing table `%s` failed' % table.name()
+                    print '====='
+                    print traceback.format_exc()
+                    print '====='
         
         return self.fixture
 
