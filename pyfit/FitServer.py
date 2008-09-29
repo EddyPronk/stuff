@@ -6,9 +6,6 @@ from context import Context
 import util
 
 class FitnesseClientFactory(ClientFactory):
-    def startedConnecting(self, connector):
-        print 'Started to connect.'
-    
     def buildProtocol(self, addr):
         self.protocol = Client()
         return self.protocol
