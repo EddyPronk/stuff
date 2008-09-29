@@ -31,15 +31,16 @@ def parse_action(action_desc):
         return SetAttribute(action_desc)
 
 class FileAdapter(object):
-    def __init__(self):
-        self.data = ''
+    def __init__(self, data):
+        self.data = data
+        self.offset = 0
     def read(self, n):
-        print 'read - n [%s]' % n
-        result = self.data[0:n]
-        #print 'read - result [%s]' % result
-        self.data = self.data[n:]
-        print 'read - rest [%s]' % self.data
-        return result
+        end = self.offset + n
+        block = self.data[self.offset:end]
+        self.offset = end
+        return block
+    def eof(self):
+        return self.offset < len(self.data)
 
 def format_10_digit_number(n):
     return "%010i" % n
@@ -55,7 +56,6 @@ def wiki_table_to_html(table):
             output += "</tr>\n"
     output += "</table>"
     return output
-
 
 def rzip(a,b):
     prev = ''
@@ -90,7 +90,6 @@ class ImportError(Exception):
         return repr(self.value)
 
 class Importer(object):
-    
     def do_import_module(self, module_name):
         __import__(module_name)
 

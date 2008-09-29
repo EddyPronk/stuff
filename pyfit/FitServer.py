@@ -10,8 +10,7 @@ class FitnesseClientFactory(ClientFactory):
         print 'Started to connect.'
     
     def buildProtocol(self, addr):
-        self.context = Context()
-        self.protocol = Client(self.context)
+        self.protocol = Client()
         return self.protocol
     
     def clientConnectionLost(self, connector, reason):

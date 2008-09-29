@@ -1,12 +1,19 @@
 from twisted.internet.protocol import Protocol, ClientFactory, Factory
+from protocol import Protocol as FitnesseProtocol
 import util
 import sys
+from table import *
+from engines import Engine
 
 class Client(Protocol):
-    def __init__(self, context):
-        self.context = context
-        self.state = 0
-        #self.data = ''
+    def __init__(self):
+        self.engine = Engine()
+        self.logfile = open('logfile', 'w')
+        self.proto = FitnesseProtocol(self)
+        self.output_pages = []
+
+    def ack(self):
+        self.ack_received = True
 
     def connectionMade(self):
         self.socketToken = sys.argv[4]
@@ -19,33 +26,33 @@ class Client(Protocol):
         #self.transport.loseConnection()
 
     def dataReceived(self, data):
+        self.logfile.write('dataReceived [%s]\n' % data)
         print 'client data received'
         print '[%s]' % data
+        self.proto.dataReceived(data)
 
-        file = util.FileAdapter()
-        file.data += data
-        while file.data is not '':
-            if self.state is 0:
-                print 'state 0'
-                length = int(file.read(10))
-                if length is 0:
-                    print 'received ack'
-                    self.state = 0
-                else:
-                    self.state = 1
-            elif self.state is 1:
-                self.state = 0
-                print 'state 1'
-                content = file.read(length)
-                output = self.context.process(content)
-        #reactor.stop()
-                self.transport.write(util.format_10_digit_number(len(output) + 1))
-                print 'sending content back'
-                self.transport.write(output)
-                self.transport.write('\n')
-                self.transport.write(util.format_10_digit_number(0))
-                self.transport.write(util.format_10_digit_number(0))
-                self.transport.write(util.format_10_digit_number(0))
-                self.transport.write(util.format_10_digit_number(0))
-                self.transport.write(util.format_10_digit_number(0))
-                self.transport.loseConnection()
+    def content(self, data):
+        doc = Document(data)
+        doc.visit_tables(self)
+
+    def on_table(self, table):
+        fixture = self.engine.process(table, throw=False)
+        self.write_table(table)
+    
+    def done(self):
+        self.transport.loseConnection()
+        
+    def write_table(self, table):
+        html = str(table.toxml()) # Fixme : str() workaround for 'Data must not be unicode'
+        self.transport.write(util.format_10_digit_number(len(html) + 1))
+        self.transport.write(html)
+        self.transport.write('\n')
+        
+    def report(self):
+        #self.transport.write('report\n')
+        # 0 right, 0 wrong, 0 ignored, 0 exceptions
+        self.transport.write(util.format_10_digit_number(0))
+        self.transport.write(util.format_10_digit_number(1))
+        self.transport.write(util.format_10_digit_number(2))
+        self.transport.write(util.format_10_digit_number(3))
+        self.transport.write(util.format_10_digit_number(4))

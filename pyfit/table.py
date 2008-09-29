@@ -160,6 +160,9 @@ class Table(object):
             tr.appendChild(td)
         self.data.appendChild(tr)
         Cell(tr.childNodes[0]).surplus()
+    
+    def toxml(self):
+        return self.data.toxml()
 
 class Document(object):
     def __init__(self, data):
@@ -176,5 +179,6 @@ class Document(object):
 
         for node in self.data.childNodes:
             if node.nodeName == 'table':
-                visitor.process(Table(node), throw=False, print_traceback=True)
+                visitor.on_table(Table(node))
+        visitor.report()
 

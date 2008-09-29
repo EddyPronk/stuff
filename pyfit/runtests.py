@@ -9,6 +9,8 @@ from test_fixtures import *
 from test_plaintypes import *
 from test_ColumnFixture import *
 from test_RowFixture import *
+from fitnesse.test_protocol import *
+from fitnesse.test_client import *
 
 if __name__ == '__main__':
     unittest.main()
