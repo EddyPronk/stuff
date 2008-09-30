@@ -180,10 +180,13 @@ class Document(object):
         return html
 
     def visit_tables(self, visitor):
-        print 'visit_tables'
-        for node in self.data.childNodes:
-            #print node.nodeName
-            if node.nodeName == 'table':
-                visitor.on_table(Table(node))
+
+        def visit(tree, visitor):
+            for node in tree.childNodes:
+                if node.nodeName == 'table':
+                    visitor.on_table(Table(node))
+                else:
+                    visit(node, visitor)
+        visit(self.data, visitor)
         visitor.report()
 

@@ -199,7 +199,7 @@ class TestTable(unittest.TestCase):
 
         x2(table)
 
-    def test_setup(self):
+    def _test_setup(self):
         xml = open('xml').read()
         #print xml
         doc = Document(xml)
