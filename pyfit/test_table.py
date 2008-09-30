@@ -199,3 +199,16 @@ class TestTable(unittest.TestCase):
 
         x2(table)
 
+    def test_setup(self):
+        xml = open('xml').read()
+        #print xml
+        doc = Document(xml)
+        #print doc.doc
+        class Fake(object):
+            def report(self):
+                pass
+            def on_table(self, table):
+                print table.name()
+                pass
+        doc.visit_tables(Fake())
+

@@ -27,5 +27,7 @@ class Protocol(object):
             else:
                 yield
                 content = self.file.read(length)
+                logfile = open('logfile', 'w')
+                logfile.write(content)
                 self.client.content(content)
                 yield
