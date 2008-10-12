@@ -3,8 +3,9 @@ from xml.dom import minidom, Node
 import re
 import sys
 from table import *
-from CalculateDiscount import *
 from util import *
+sys.path.append('examples')
+from CalculateDiscount import *
 
 class TestTable(unittest.TestCase):
 
