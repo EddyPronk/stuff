@@ -2,7 +2,6 @@ import sys
 from twisted.internet.protocol import Protocol, ClientFactory, Factory
 from twisted.internet import reactor
 from fitnesse.client import Client
-from context import Context
 import util
 
 class FitnesseClientFactory(ClientFactory):
