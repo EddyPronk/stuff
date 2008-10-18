@@ -16,6 +16,8 @@ class FitnesseClientFactory(ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         print 'Connection failed. Reason:', reason
 
+path = sys.argv[1]
+util.add_to_python_path(path)
 host = sys.argv[2]
 port =  int(sys.argv[3])
 socketToken = sys.argv[4]

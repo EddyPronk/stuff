@@ -37,7 +37,8 @@ class TestClient(unittest.TestCase):
 
     def test_multi_page(self):
 
-        self.add_table('|Table1|')
+        self.add_table('|Table1|')        #self.assertEqual(self.context.reports, 2)
+
         self.add_table('|Table2|')
         self.client.content(self.html())
 
@@ -45,4 +46,7 @@ class TestClient(unittest.TestCase):
         self.add_table('|Table4|')
         self.client.content(self.html())
 
-        #self.assertEqual(self.context.reports, 2)
+    def test_python_path(self):
+        path = 'foobar:classes:fitnesse.jar:fitlibrary.jar'
+        add_to_python_path(path)
+        self.assertEqual(sys.path.count('foobar'), 1)

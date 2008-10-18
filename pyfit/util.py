@@ -1,4 +1,5 @@
 import re
+import sys
 import traceback
 
 class MethodCall(object):
@@ -113,3 +114,7 @@ class CreateFixture(object):
             raise Exception("Could not create fixture '%s'" % name)
         return type()
         
+def add_to_python_path(path):
+    paths =  path.split(':')[:-3] # remove classes:fitnesse.jar:fitlibrary.jar'
+    sys.path.extend(paths)
+
