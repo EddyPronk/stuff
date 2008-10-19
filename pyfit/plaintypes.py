@@ -1,6 +1,7 @@
 class Cell(object):
     def __init__(self, data):
         self.expected = data
+        self.has_passed = False
 
     def __repr__(self):
         return self.expected

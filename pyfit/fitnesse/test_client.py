@@ -50,3 +50,8 @@ class TestClient(unittest.TestCase):
         path = 'foobar:classes:fitnesse.jar:fitlibrary.jar'
         add_to_python_path(path)
         self.assertEqual(sys.path.count('foobar'), 1)
+
+    def test_bool(self):
+        x = True
+        self.assertEqual(True, bool('true'))
+        self.assertEqual(True, bool('false'))

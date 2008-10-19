@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 
 import unittest
+from test_util import *
 from test_table import *
 from test_import import *
 from test_differ import *

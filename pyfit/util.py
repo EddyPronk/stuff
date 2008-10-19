@@ -1,6 +1,7 @@
 import re
 import sys
 import traceback
+import string
 
 class MethodCall(object):
     def __init__(self, name):
@@ -8,6 +9,22 @@ class MethodCall(object):
     def apply(self, fixture, cell):
         f = getattr(fixture, self.name)
         actual = f()
+        if actual is None:
+            raise Exception('returned None')
+
+        value = str(cell)
+
+        def parse_bool(s):
+            return s == 'true'
+
+        if type(actual) is bool:
+            if parse_bool(value) == actual:
+                cell.passed()
+                return
+            else:
+                cell.failed(actual)
+                return
+ 
         if type(actual)(str(cell)) == actual:
             cell.passed()
         else:
@@ -17,8 +34,22 @@ class SetAttribute(object):
     def __init__(self, name):
         self.name = name
     def apply(self, fixture, cell):
+
+        def string_to_bool(s):
+            if s == 'true':
+                value = True
+            else:
+                if s == 'false':
+                    value = False
+            return value
         try:
-            setattr(fixture, self.name, type(getattr(fixture, self.name))(str(cell)))
+            old = getattr(fixture, self.name)
+            new = str(cell)
+            if type(old) is bool:
+                setattr(fixture, self.name, string_to_bool(new))
+            else:
+                setattr(fixture, self.name, type(old)(str(cell)))
+
         except AttributeError, inst:
             #print e
             cell.error(str(inst))
@@ -27,7 +58,9 @@ def parse_action(action_desc):
     res = re.search('(.*)\(\)', action_desc)
     if res is not None:
         action_name = res.group(1)
-        return MethodCall(res.group(1))
+        action_name = string.replace(action_name, ' ', '_')
+        #return MethodCall(res.group(1))
+        return MethodCall(action_name)
     else:
         return SetAttribute(action_desc)
 

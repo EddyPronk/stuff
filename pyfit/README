@@ -1,6 +1,21 @@
 This is a work in progress based on PyFIT 0.8a2.
 The intend is to merge this code back into PyFIT.
- 
+
+Design goals/ideas :
+* A table is a list of lists.
+* Flow mode for DoFixtures part of design.
+* Eliminate need for _typeDict
+* uses a XML parser (minidom)
+* unit tests use wiki syntax instead of HTML.
+* most unit tests run without HTML dependency.
+* uses and integrates with Twisted.
+
+What works so far? (in about 700 lines of Python):
+* A FitServer which works with Fitnesse.
+* ColumnFixtures and RowFixtures.
+* simple DoFixtures.
+* Setup in suites.
+
 -----------------------------------------------------------------
 
 The original FIT framework is by Ward Cunningham (fit.c2.com)

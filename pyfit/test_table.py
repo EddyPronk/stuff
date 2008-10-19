@@ -72,7 +72,7 @@ class TestTable(unittest.TestCase):
     def test_cell_can_fail(self):
         cell = Cell(minidom.parseString('<td>50.0</td>').childNodes[0])
         cell.failed(49.5)
-        self.assertEqual('<td class="fail">49.5 <span class="fit_label">expected</span><hr>50.0 </hr>'
+        self.assertEqual('<td class="fail">50.0 <span class="fit_label">expected</span><hr>49.5 </hr>'
                          '<span class="fit_label">actual</span></td>', cell.data.toxml())
 
     def test_cell_can_be_missing(self):
