@@ -8,6 +8,9 @@ class DefaultLoader(object):
         except ImportError, inst:
             a = traceback.format_exc()
             print '{\n%s}' % inst.value
+        names = name.split('.')[1:]
+        for name in names:
+            module = getattr(module, name)
         class_ = getattr(module, name)
         return class_()
 
@@ -30,6 +33,7 @@ class Engine(object):
         self.loader = DefaultLoader()
         self.fixture = None
         self.print_traceback = False
+        self.adapters = DefaultAdapters()
 
     def load_fixture(self, name):
         if self.fixture is None:
@@ -43,6 +47,8 @@ class Engine(object):
         
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
+
+        self.fixture.adapters = self.adapters
 
     def do_process(self, table):
         name = table.name()
@@ -59,6 +65,7 @@ class Engine(object):
                 self.do_process(table)
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
+
                 table.cell(0,0).error(inst)
 
                 if self.print_traceback:

@@ -4,7 +4,7 @@ from plaintypes import *
 
 class TestEngines(unittest.TestCase):
 
-    def test_action_fixture(self):
+    def test_loading_non_existing_fixture(self):
         engine = Engine()
         engine.loader = StringLoader('import doesntexist\n')
         try:
@@ -13,6 +13,12 @@ class TestEngines(unittest.TestCase):
             pass
 
         self.assertEqual(str(inst), 'No module named doesntexist')
+
+    def test_action_fixture(self):
+        engine = Engine()
+        engine.load_fixture('RowFixture')
+        engine.load_fixture('ColumnFixture')
+        engine.load_fixture('fit.ActionFixture')
 
     def test_input_table(self):
 

@@ -3,29 +3,43 @@ import sys
 import traceback
 import string
 
+class BoolAdapter(object):
+    def parse(self, s):
+        if s == 'true':
+            value = True
+        else:
+            if s == 'false':
+                value = False
+            else:
+                raise Exception("Can't convert `%s`" % s)
+        return value
+
+    def convert(self, s):
+        return s == 'true'
+
+class ListAdapter(object):
+    def parse(self, s):
+        return [x.lstrip() for x in s.split(',')]
+
 class MethodCall(object):
     def __init__(self, name):
         self.name = name
-    def apply(self, fixture, cell):
+
+    def apply(self, fixture, cell, adapters):
         f = getattr(fixture, self.name)
         actual = f()
         if actual is None:
             raise Exception('returned None')
 
         value = str(cell)
+        target_type = type(actual)
+        if adapters.has_key(target_type):
+            adapter = adapters[target_type]
+            expected = adapter.convert(value)
+        else:
+            expected = type(actual)(str(cell))
 
-        def parse_bool(s):
-            return s == 'true'
-
-        if type(actual) is bool:
-            if parse_bool(value) == actual:
-                cell.passed()
-                return
-            else:
-                cell.failed(actual)
-                return
- 
-        if type(actual)(str(cell)) == actual:
+        if expected == actual:
             cell.passed()
         else:
             cell.failed(actual)
@@ -33,25 +47,20 @@ class MethodCall(object):
 class SetAttribute(object):
     def __init__(self, name):
         self.name = name
-    def apply(self, fixture, cell):
+    def apply(self, fixture, cell, adapters):
 
-        def string_to_bool(s):
-            if s == 'true':
-                value = True
-            else:
-                if s == 'false':
-                    value = False
-            return value
         try:
             old = getattr(fixture, self.name)
-            new = str(cell)
-            if type(old) is bool:
-                setattr(fixture, self.name, string_to_bool(new))
+            target_type = type(old)
+            cell_value = str(cell)
+            if adapters.has_key(target_type):
+                adapter = adapters[target_type]
+                new = adapter.parse(cell_value)
             else:
-                setattr(fixture, self.name, type(old)(str(cell)))
+                new = type(old)(str(cell))
+            setattr(fixture, self.name, new)
 
         except AttributeError, inst:
-            #print e
             cell.error(str(inst))
 
 def parse_action(action_desc):
@@ -125,7 +134,8 @@ class ImportError(Exception):
 
 class Importer(object):
     def do_import_module(self, module_name):
-        __import__(module_name)
+        pass
+        #__import__(module_name)
 
     def import_module(self, name):
         try:
@@ -145,9 +155,17 @@ class CreateFixture(object):
             type = self.globals[name]
         except KeyError, inst:
             raise Exception("Could not create fixture '%s'" % name)
-        return type()
+        fixture = type()
+        fixture.adapters = {}
+        return fixture
         
 def add_to_python_path(path):
     paths =  path.split(':')[:-3] # remove classes:fitnesse.jar:fitlibrary.jar'
     sys.path.extend(paths)
 
+def DefaultAdapters():
+    adapters = {}
+    adapters[bool] = BoolAdapter()
+    adapters[list] = ListAdapter()
+    return adapters
+        

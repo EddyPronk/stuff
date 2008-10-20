@@ -141,7 +141,9 @@ class TestTable(unittest.TestCase):
         name = table.rows[0][0]
 
         def CreateFixture(name):
-            return globals()[name]()
+            fixture = globals()[name]()
+            fixture.adapters = DefaultAdapters()
+            return fixture
 
         fixture = CreateFixture(str(name))
         fixture.process(table)

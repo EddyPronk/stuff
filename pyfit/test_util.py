@@ -3,6 +3,9 @@ from util import *
 from plaintypes import *
 
 class TestUtil(unittest.TestCase):
+    def setUp(self):
+        self.adapters = DefaultAdapters()
+
     def test_if_apply_throws_when_function_returns_None(self):
 
         class FakeFixture(object):
@@ -13,12 +16,12 @@ class TestUtil(unittest.TestCase):
         fixture = FakeFixture()
         cell = Cell('dummy')
         try:
-            operation.apply(fixture, cell)
+            operation.apply(fixture, cell, self.adapters)
         except Exception, inst:
             pass
         self.assertEqual(str(inst), 'returned None')
 
-    def test_2(self):
+    def test_bool_adapter_1(self):
 
         class FakeFixture(object):
             def func(self):
@@ -27,43 +30,26 @@ class TestUtil(unittest.TestCase):
         operation = MethodCall('func')
         fixture = FakeFixture()
         cell = Cell('false')
-        operation.apply(fixture, cell)
+
+        operation.apply(fixture, cell, self.adapters)
         self.assertEqual(cell.has_passed, True)
 
-    def test_3(self):
-        
-        def parse_bool(s):
-            return s is 'true'
-
-        self.assertEqual(True, parse_bool('true'))
-        self.assertEqual(False, parse_bool('false'))
-
-        def bool_to_string(s):
-            return str(s).lower()
-
-        self.assertEqual('true',  bool_to_string(True))
-        self.assertEqual('false', bool_to_string(False))
-
-    def test_4(self):
+    def test_bool_adapter_2(self):
         class FakeFixture(object):
             reliable = False
 
         operation = SetAttribute('reliable')
         fixture = FakeFixture()
         cell = Cell('false')
-        operation.apply(fixture, cell)
+        operation.apply(fixture, cell, self.adapters)
         self.assertEqual(fixture.reliable, False)
 
-        class Bool(object):
-            def parse(self, s):
-                if s == 'true':
-                    value = True
-                else:
-                    if s == 'false':
-                        value = False
-                    else:
-                        raise Exception("Can't convert `%s`" % s)
-                return value
+    def test_list_adapter(self):
+        class FakeFixture(object):
+            phones = []
 
-        converter = Bool()
-        converter.parse('false')
+        operation = SetAttribute('phones')
+        fixture = FakeFixture()
+        cell = Cell('(209)373 7453, (209)373 7454')
+        operation.apply(fixture, cell, self.adapters)
+        self.assertEqual(fixture.phones, ['(209)373 7453', '(209)373 7454'])
