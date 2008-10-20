@@ -6,8 +6,7 @@ class CalculateDiscount(ColumnFixture):
 
     def discount(self):
         if (self.amount < 0):
-            pass
-            #throw new RuntimeException("Can't be a negative amount");
+            raise Exception("Can't be a negative amount")
         if (self.amount < 1000):
             return 0.0
         else:
