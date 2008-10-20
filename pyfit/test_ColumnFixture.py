@@ -1,7 +1,7 @@
 import unittest
 from fixtures import *
 from plaintypes import *
-from ColumnFixture import ColumnFixture
+from fit.ColumnFixture import ColumnFixture
 from engines import Engine
 
 class FakeColumnFixture(ColumnFixture):

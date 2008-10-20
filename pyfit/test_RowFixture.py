@@ -1,7 +1,7 @@
 import unittest
 from util import *
 from plaintypes import *
-from RowFixture import RowFixture
+from fit.RowFixture import RowFixture
 from engines import Engine
 
 class OccupantList(RowFixture):

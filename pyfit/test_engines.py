@@ -16,8 +16,8 @@ class TestEngines(unittest.TestCase):
 
     def test_action_fixture(self):
         engine = Engine()
-        engine.load_fixture('RowFixture')
-        engine.load_fixture('ColumnFixture')
+        engine.load_fixture('fit.RowFixture')
+        engine.load_fixture('fit.ColumnFixture')
         engine.load_fixture('fit.ActionFixture')
 
     def test_input_table(self):

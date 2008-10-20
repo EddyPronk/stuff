@@ -1,4 +1,4 @@
-from ColumnFixture import ColumnFixture
+from fit.ColumnFixture import ColumnFixture
 
 class CalculateDiscount(ColumnFixture):
 
