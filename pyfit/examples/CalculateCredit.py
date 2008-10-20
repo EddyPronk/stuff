@@ -1,5 +1,5 @@
 from Credit import Credit
-from ColumnFixture import ColumnFixture
+from fit.ColumnFixture import ColumnFixture
 
 class CalculateCredit(ColumnFixture):
     months = 0
