@@ -94,6 +94,13 @@ class TestTable(unittest.TestCase):
             '<td class="error">amount<hr>some message</hr></td>',
             str(cell.data.toxml()))
 
+    def _test_cell_can_have_error2(self):
+        cell = Cell(minidom.parseString('<td><i>connect user</i></td>').childNodes[0])
+        cell.error('some message')
+        self.assertEqual(
+            '<td class="error">amount<hr>some message</hr></td>',
+            str(cell.data.toxml()))
+
     def test_adding_row(self):
         html = '<table><tr><td>name</td><td>room</td></tr></table>'
         table = Table(html)
@@ -155,6 +162,29 @@ class TestTable(unittest.TestCase):
         html = '<table><tr><td colspan="2">CalculateDiscount</td>\n</tr></table>'
         table = Table(html)
         self.assertEqual('CalculateDiscount', table.name())
+
+    def test_two_tables(self):
+        html = '<table border="1" cellspacing="0">\n' \
+            '<tr><td colspan="2">CalculateDiscount</td>\n' \
+            '</tr>\n' \
+            '<tr><td><i>amount</i></td>\n' \
+            '<td><i>discount()</i></td>' \
+            '</tr>\n' \
+            '<tr><td>0.00</td>\n' \
+            '<td>0.00</td>\n' \
+            '</tr>\n' \
+            '</table><table border="1" cellspacing="0">\n' \
+            '<tr><td colspan="2">CalculateDiscount</td>\n' \
+            '</tr>\n' \
+            '<tr><td><i>amount</i></td>\n' \
+            '<td><i>discount()</i></td>' \
+            '</tr>\n' \
+            '<tr><td>0.00</td>\n' \
+            '<td>0.00</td>\n' \
+            '</tr>\n' \
+            '</table>\n'
+
+        doc = Document(html)
 
     def _test_action_fixture(self):
         html = '<table border="1" cellspacing="0">\n' \

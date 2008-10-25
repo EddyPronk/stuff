@@ -66,8 +66,9 @@ class Engine(object):
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
 
-                table.cell(0,0).error(inst)
+                print inst
 
+                #table.cell(0,0).error(inst)
                 if self.print_traceback:
                     print 'Processing table `%s` failed' % table.name()
                     print '====='

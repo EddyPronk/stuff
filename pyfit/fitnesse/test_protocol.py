@@ -10,6 +10,7 @@ class TestProtocol(unittest.TestCase):
         self.ack_received = True
 
     def content(self, content):
+        self.data = content
         self.pages += 1
 
     def done(self):
@@ -27,6 +28,16 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(self.pages, 1)
         self.assert_(self.done_received)
 
+    def test_if_protocol_reads_correct_length(self):
+        '''this reproduced a bug'''
+        self.proto.dataReceived('0000000000')
+        self.proto.dataReceived('0000000004')
+        self.proto.dataReceived('ab')
+        self.proto.dataReceived('cd0000000000')
+        self.assertEqual(self.pages, 1)
+        self.assert_(self.done_received)
+        self.assertEqual(self.data, 'abcd')
+
     def test_length_and_content_in_same_block(self):
         self.proto.dataReceived('0000000000')
         self.proto.dataReceived('0000000004abcd')
@@ -38,8 +49,10 @@ class TestProtocol(unittest.TestCase):
         self.proto.dataReceived('0000000000')
         self.proto.dataReceived('0000000004')
         self.proto.dataReceived('abcd')
+        self.assertEqual(self.data, 'abcd')
         self.proto.dataReceived('0000000004')
         self.proto.dataReceived('abcd')
+        self.assertEqual(self.data, 'abcd')
         self.proto.dataReceived('0000000000')
         self.assertEqual(self.pages, 2)
         self.assert_(self.done_received)

@@ -1,5 +1,4 @@
 from xml.dom import minidom, Node
-import workaround
 
 def create_table(node):
     rows = []
@@ -131,9 +130,7 @@ class Row(object):
 class Table(object):
     def __init__(self, data):
         if type(data) is str:
-            #self.doc = minidom.parseString(data)
-            self.doc = workaround.parse_xml(data)
-            #print type(self.doc)
+            self.doc = minidom.parseString(data)
             self.data = self.doc.childNodes[0]
         else:
             self.data = data
@@ -168,10 +165,11 @@ class Table(object):
 
 class Document(object):
     def __init__(self, data):
-        xml = '<doc>\n' + data + '</doc>\n'
-        #self.doc = minidom.parseString(xml)
-        self.doc = workaround.parse_xml(xml)
-        self.data = self.doc.childNodes[0]
+        xml = '<?xml version="1.0"?>' \
+            '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' + \
+            '<doc>\n' + data + '</doc>\n'
+        self.doc = minidom.parseString(xml)
+        self.data = self.doc.childNodes[1]
 
     def html(self):
         html = ''

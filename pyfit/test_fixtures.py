@@ -183,7 +183,6 @@ class TestFixtures(unittest.TestCase):
                 self.name = name
                 self.group = group
             def apply(self, fixture, cell):
-                #print 'set %s.%s to value [%s]' % (self.group, self.name, cell)
                 group = getattr(fixture, self.group)
                 setattr(group, self.name, str(cell))
 
@@ -215,7 +214,6 @@ class TestFixtures(unittest.TestCase):
 
 
             def element(self, x,y):
-                #print (x,y)
                 attr = getattr(self, x)
                 self.desc.append(SetGroupAttribute(y,x))
                 # need partials here.
@@ -234,7 +232,6 @@ class TestFixtures(unittest.TestCase):
 
             def outgoing_done(self):
                 self.incoming = self.Message()
-                #print self.outgoing.__dict__
 
             def incoming_done(self):
                 pass

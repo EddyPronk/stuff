@@ -10,7 +10,6 @@ class FitnesseClientFactory(ClientFactory):
         return self.protocol
     
     def clientConnectionLost(self, connector, reason):
-        #print 'Lost connection.  Reason:', reason
         reactor.stop()
     
     def clientConnectionFailed(self, connector, reason):

@@ -9,6 +9,7 @@ def fix1(lines, lineno, column):
     res = re.search(sequence, line)
     if res is not None:
         print 'found `%s`' % sequence
+        print line
         line = line.replace(sequence, '')
         lines[lineno] = line
         return True
@@ -21,10 +22,31 @@ def fix2(lines, lineno, column):
     line = line.replace('.SetUp?edit&redirectToReferer=true&redirectAction=', '')
     lines[lineno] = line
 
-def parse_xml(xml):
-    fixes = [ fix1, fix2 ]
+def fix3(lines, lineno, column):
+    print 'fix3'
+    line = lines[lineno]
+    line = line.replace('gif">', 'gif"/>')
+    lines[lineno] = line
+
+def fix4(lines, lineno, column):
+    print 'fix4'
+    line = lines[lineno]
+    line = line.replace('jpg">', 'jpg"/>')
+    lines[lineno] = line
+
+def parse_xml(html):
+
+    xml = '<?xml version="1.0"?>' \
+        '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' + html
+    return minidom.parseString(xml)
+
+def parse_xml2(html):
+    fixes = [ ]
     done = False
     prev_error = (0, 0)
+
+    xml = '<?xml version="1.0"?>' \
+        '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' + html
 
     while done is False:
         try:
@@ -56,7 +78,6 @@ def parse_xml(xml):
             last_error = (lineno, column)
             if last_error == prev_error:
                 print 'same error as last time. Giving up.'
-                open('error', 'w').write(xml)
                 print last_error
                 print lines[lineno]
                 done = True

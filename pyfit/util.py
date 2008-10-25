@@ -68,7 +68,6 @@ def parse_action(action_desc):
     if res is not None:
         action_name = res.group(1)
         action_name = string.replace(action_name, ' ', '_')
-        #return MethodCall(res.group(1))
         return MethodCall(action_name)
     else:
         return SetAttribute(action_desc)
@@ -168,4 +167,3 @@ def DefaultAdapters():
     adapters[bool] = BoolAdapter()
     adapters[list] = ListAdapter()
     return adapters
-        

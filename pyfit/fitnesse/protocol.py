@@ -25,9 +25,11 @@ class Protocol(object):
                 self.client.done()
                 yield
             else:
-                yield
-                content = self.file.read(length)
-                logfile = open('logfile', 'w')
-                logfile.write(content)
+                content = ''
+                bytes_to_go = length
+                while bytes_to_go > 0:
+                    yield
+                    content += self.file.read(bytes_to_go)
+                    bytes_to_go -= len(content)
                 self.client.content(content)
                 yield
