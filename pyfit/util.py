@@ -82,7 +82,7 @@ class FileAdapter(object):
         self.offset = end
         return block
     def eof(self):
-        return self.offset < len(self.data)
+        return self.offset >= len(self.data)
 
 def format_10_digit_number(n):
     return "%010i" % n

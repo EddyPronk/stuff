@@ -7,7 +7,7 @@ class Protocol(object):
     
     def dataReceived(self, data):
         self.file = FileAdapter(data)
-        while self.file.eof():
+        while not self.file.eof():
             self.process.next()
 
     def read_length(self):
