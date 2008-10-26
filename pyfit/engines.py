@@ -68,7 +68,7 @@ class Engine(object):
 
                 print inst
 
-                #table.cell(0,0).error(inst)
+                table.cell(0,0).error(inst)
                 if self.print_traceback:
                     print 'Processing table `%s` failed' % table.name()
                     print '====='

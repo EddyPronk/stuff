@@ -19,17 +19,18 @@ def create_table(node):
             rows.append(row_cells)
     return rows
 
+def deepest(node):
+    if node is not None:
+        if node.hasChildNodes():
+            return deepest(node.childNodes[0])
+        else:
+            return node
+
 class Cell(object):
     def __init__(self, data):
         self.data = data
         self.doc = data.ownerDocument
     def __repr__(self):
-        def deepest(node):
-            if node is not None:
-                if node.hasChildNodes():
-                    return deepest(node.childNodes[0])
-                else:
-                    return node
         d = deepest(self.data).nodeValue
         if d == None:
             return ''
@@ -63,7 +64,8 @@ class Cell(object):
         doc = self.data.ownerDocument
         hr = doc.createElement("hr")
         hr.appendChild(doc.createTextNode(str(message)))
-        value = doc.createTextNode(self.data.childNodes[0].nodeValue)
+        v = deepest(self.data).nodeValue
+        value = doc.createTextNode(v)
         self.data.replaceChild(hr, self.data.childNodes[0])
         self.data.insertBefore(value, self.data.childNodes[0])
 

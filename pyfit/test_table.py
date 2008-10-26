@@ -94,11 +94,11 @@ class TestTable(unittest.TestCase):
             '<td class="error">amount<hr>some message</hr></td>',
             str(cell.data.toxml()))
 
-    def _test_cell_can_have_error2(self):
+    def test_cell_can_have_error2(self):
         cell = Cell(minidom.parseString('<td><i>connect user</i></td>').childNodes[0])
         cell.error('some message')
         self.assertEqual(
-            '<td class="error">amount<hr>some message</hr></td>',
+            '<td class="error">connect user<hr>some message</hr></td>',
             str(cell.data.toxml()))
 
     def test_adding_row(self):
@@ -123,7 +123,6 @@ class TestTable(unittest.TestCase):
         for cell in it:
             s.append(str(cell))
         self.assertEqual(['add', 'arg1', 'arg2'], s)
-        #print s
         it = RowIter(iter(row))
         for cell in it:
             self.assertEqual('add', str(cell))
