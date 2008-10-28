@@ -39,10 +39,16 @@ class Client(Protocol):
         self.transport.write(html)
         self.transport.write('\n')
         
+    def write_number(self, number):
+        self.transport.write(util.format_10_digit_number(number))
+
     def report(self):
+        summary = self.engine.summary
+
         # 0 right, 0 wrong, 0 ignored, 0 exceptions
-        self.transport.write(util.format_10_digit_number(0))
-        self.transport.write(util.format_10_digit_number(1))
-        self.transport.write(util.format_10_digit_number(2))
-        self.transport.write(util.format_10_digit_number(3))
-        self.transport.write(util.format_10_digit_number(4))
+        self.write_number(0)
+        self.write_number(summary.right)
+        self.write_number(summary.wrong)
+        self.write_number(summary.ignored)
+        self.write_number(summary.exceptions)
+        summary.reset()

@@ -54,12 +54,12 @@ class TestColumnFixture(unittest.TestCase):
         wiki = '''
             |FakeColumnFixture|
             |arg1|arg2|sum()|
-            |20|10|35|
+            |20|10|30|
         '''
 
         fixture = self.process(wiki)
         cell = self.table.cell(2,2)
-        self.assert_(cell.has_failed)
+        self.assert_(cell.has_passed)
 
     def test_non_existing_attribute(self):
         wiki = '''
@@ -71,6 +71,3 @@ class TestColumnFixture(unittest.TestCase):
         fixture = self.process(wiki)
         self.assertEqual(self.table.cell(0,2).error_message,
                          """'FakeColumnFixture' object has no attribute 'quantity'""")
-        
-
-

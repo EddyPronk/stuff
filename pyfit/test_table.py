@@ -6,6 +6,7 @@ from table import *
 from util import *
 sys.path.append('examples')
 from CalculateDiscount import *
+from engines import Engine
 
 class TestTable(unittest.TestCase):
 
@@ -148,7 +149,7 @@ class TestTable(unittest.TestCase):
 
         def CreateFixture(name):
             fixture = globals()[name]()
-            fixture.adapters = DefaultAdapters()
+            fixture.engine = Engine()
             return fixture
 
         fixture = CreateFixture(str(name))

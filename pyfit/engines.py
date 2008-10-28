@@ -24,6 +24,16 @@ class StringLoader(DefaultLoader):
         x = compile(self.script, 'not_a_file.py', 'exec')
         eval(x)
             
+class Summary(object):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.right = 0
+        self.wrong = 0
+        self.ignored = 0
+        self.exceptions = 0
+        
 class Engine(object):
     
     # return the next object in the flow or None.
@@ -34,6 +44,7 @@ class Engine(object):
         self.fixture = None
         self.print_traceback = False
         self.adapters = DefaultAdapters()
+        self.summary = Summary()
 
     def load_fixture(self, name):
         if self.fixture is None:
@@ -48,7 +59,7 @@ class Engine(object):
         if self.fixture is None:
             raise Exception("fixture '%s' not found." % name)
 
-        self.fixture.adapters = self.adapters
+        self.fixture.engine = self
 
     def do_process(self, table):
         name = table.name()
@@ -66,7 +77,7 @@ class Engine(object):
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
 
-                print inst
+                #print inst
 
                 table.cell(0,0).error(inst)
                 if self.print_traceback:

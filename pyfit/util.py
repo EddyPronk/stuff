@@ -25,7 +25,7 @@ class MethodCall(object):
     def __init__(self, name):
         self.name = name
 
-    def apply(self, fixture, cell, adapters):
+    def apply(self, fixture, cell, engine):
         f = getattr(fixture, self.name)
         actual = f()
         if actual is None:
@@ -33,28 +33,30 @@ class MethodCall(object):
 
         value = str(cell)
         target_type = type(actual)
-        if adapters.has_key(target_type):
-            adapter = adapters[target_type]
+        if engine.adapters.has_key(target_type):
+            adapter = engine.adapters[target_type]
             expected = adapter.convert(value)
         else:
             expected = type(actual)(str(cell))
 
         if expected == actual:
             cell.passed()
+            engine.summary.right += 1
         else:
             cell.failed(actual)
+            engine.summary.wrong += 1
 
 class SetAttribute(object):
     def __init__(self, name):
         self.name = name
-    def apply(self, fixture, cell, adapters):
+    def apply(self, fixture, cell, engine):
 
         try:
             old = getattr(fixture, self.name)
             target_type = type(old)
             cell_value = str(cell)
-            if adapters.has_key(target_type):
-                adapter = adapters[target_type]
+            if engine.adapters.has_key(target_type):
+                adapter = engine.adapters[target_type]
                 new = adapter.parse(cell_value)
             else:
                 new = type(old)(str(cell))

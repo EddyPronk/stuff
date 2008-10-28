@@ -10,4 +10,4 @@ class ColumnFixture(object):
 
         for row in table.rows[2:]:
             for (d, cell) in zip(desc, row):
-                d.apply(self, cell, self.adapters)
+                d.apply(self, cell, self.engine)
