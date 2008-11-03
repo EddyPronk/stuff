@@ -31,7 +31,7 @@ class Differ(object):
 
     def cPartition(self, rows, col, map):
         for row in rows:
-            key = row[0]
+            key = row[col]
             self.insureKeyExists(map, key)
             map[key][1].append(row)
 
