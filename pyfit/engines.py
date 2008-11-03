@@ -77,8 +77,6 @@ class Engine(object):
             except Exception, inst:
                 '''Fixme: Should the rest of the table become grey?'''
 
-                #print inst
-
                 table.cell(0,0).error(inst)
                 if self.print_traceback:
                     print 'Processing table `%s` failed' % table.name()
@@ -88,3 +86,18 @@ class Engine(object):
         
         return self.fixture
 
+    def compare(self, cell, actual_value):
+        expected_value = str(cell)
+        target_type = type(actual_value)
+        if self.adapters.has_key(target_type):
+            adapter = self.adapters[target_type]
+            expected = adapter.convert(expected_value)
+        else:
+            expected = type(actual_value)(expected_value)
+
+        if expected == actual_value:
+            cell.passed()
+            self.summary.right += 1
+        else:
+            cell.failed(actual_value)
+            self.summary.wrong += 1

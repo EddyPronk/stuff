@@ -8,6 +8,7 @@ from engines import Engine
 class Client(Protocol):
     def __init__(self):
         self.engine = Engine()
+        self.engine.print_traceback = True
         self.proto = FitnesseProtocol(self)
 
     def ack(self):

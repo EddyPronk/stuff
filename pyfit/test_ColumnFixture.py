@@ -68,6 +68,9 @@ class TestColumnFixture(unittest.TestCase):
             |20|
         '''
 
-        fixture = self.process(wiki)
+        try:
+            fixture = self.process(wiki)
+        except Exception, inst:
+            pass
         self.assertEqual(self.table.cell(0,2).error_message,
                          """'FakeColumnFixture' object has no attribute 'quantity'""")

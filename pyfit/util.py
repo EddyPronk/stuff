@@ -2,6 +2,7 @@ import re
 import sys
 import traceback
 import string
+from inspect import *
 
 class BoolAdapter(object):
     def parse(self, s):
@@ -31,20 +32,7 @@ class MethodCall(object):
         if actual is None:
             raise Exception('returned None')
 
-        value = str(cell)
-        target_type = type(actual)
-        if engine.adapters.has_key(target_type):
-            adapter = engine.adapters[target_type]
-            expected = adapter.convert(value)
-        else:
-            expected = type(actual)(str(cell))
-
-        if expected == actual:
-            cell.passed()
-            engine.summary.right += 1
-        else:
-            cell.failed(actual)
-            engine.summary.wrong += 1
+        engine.compare(cell, actual)
 
 class SetAttribute(object):
     def __init__(self, name):
@@ -52,18 +40,23 @@ class SetAttribute(object):
     def apply(self, fixture, cell, engine):
 
         try:
-            old = getattr(fixture, self.name)
-            target_type = type(old)
-            cell_value = str(cell)
-            if engine.adapters.has_key(target_type):
-                adapter = engine.adapters[target_type]
-                new = adapter.parse(cell_value)
+            attribute = getattr(fixture, self.name)
+            if ismethod(attribute):
+                cell_value = str(cell)
+                attribute(cell_value)
             else:
-                new = type(old)(str(cell))
-            setattr(fixture, self.name, new)
+                target_type = type(attribute)
+                cell_value = str(cell)
+                if engine.adapters.has_key(target_type):
+                    adapter = engine.adapters[target_type]
+                    new = adapter.parse(cell_value)
+                else:
+                    new = type(attribute)(str(cell))
+                setattr(fixture, self.name, new)
 
         except AttributeError, inst:
             cell.error(str(inst))
+            raise
 
 def parse_action(action_desc):
     res = re.search('(.*)\(\)', action_desc)

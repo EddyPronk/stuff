@@ -22,6 +22,8 @@ class FakeBuyActions(object):
         self.arg2 = 0.0
     def sum(self):
         return self.arg1 + self.arg2
+    def total(self):
+        return 10.0
 
 class TestActionFixture(unittest.TestCase):
     def setUp(self):
@@ -39,3 +41,13 @@ class TestActionFixture(unittest.TestCase):
         '''
         
         fixture = self.process(wiki)
+
+    def test_existing_attribute2(self):
+        wiki = '''
+            |ActionFixture|
+            |start|FakeBuyActions|
+            |check|total|00.00|
+        '''
+        
+        fixture = self.process(wiki)
+        
