@@ -9,6 +9,11 @@ class OccupantList(RowFixture):
         return [ {'user': 'anna', 'room': 'lotr'},
                  {'user': 'luke', 'room': 'lotr'} ]
 
+class OccupantList3(RowFixture):
+    def query(self):
+        return [ {'order': 1},
+                 {'order': 2} ]
+
 class OccupantList2(RowFixture):
     def query(self):
         result = []
@@ -81,3 +86,25 @@ class TestRowFixture2(unittest.TestCase):
         self.assertEqual(fixture.differ.missing, [])
         self.assertEqual(fixture.differ.surplus, [['luke', 'lotr']])
         self.assertEqual(len(self.table.rows), 4)
+
+class TestRowFixture3(unittest.TestCase):
+    def setUp(self):
+        self.engine = Engine()
+        self.engine.loader = CreateFixture(globals())
+
+    def process(self, wiki):
+        self.table = Table(wiki_table_to_plain(wiki))
+        return self.engine.process(self.table)
+
+    def test_two_surplus_rows(self):
+        wiki = '''
+            |OccupantList3|
+            |order|
+            |1 |
+            |2 |
+        '''
+
+        fixture = self.process(wiki)
+        self.assertEqual(fixture.differ.missing, [['1'], ['2']])
+        self.assertEqual(fixture.differ.surplus, [[1], [2]])
+        #self.assertEqual(len(self.table.rows), 4)

@@ -32,4 +32,4 @@ class RowFixture(object):
         for row in self.differ.missing:
             row[0].missing()
         for row in self.differ.surplus:
-            table.rows.append(row)
+            table.append_row(row)

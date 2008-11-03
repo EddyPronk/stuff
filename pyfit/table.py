@@ -157,7 +157,7 @@ class Table(object):
         tr = doc.createElement("tr")
         for cell in row:
             td = doc.createElement("td")
-            td.appendChild(doc.createTextNode(cell))
+            td.appendChild(doc.createTextNode(str(cell)))
             tr.appendChild(td)
         self.data.appendChild(tr)
         Cell(tr.childNodes[0]).surplus()

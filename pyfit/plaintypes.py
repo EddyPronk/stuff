@@ -7,7 +7,7 @@ class Cell(object):
         return self.expected
 
     def __eq__(self, other):
-        return self.expected == other.expected
+        return self.expected == other #.expected
 
     def passed(self):
         self.has_passed = True
