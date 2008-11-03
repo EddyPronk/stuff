@@ -34,3 +34,10 @@ class TestEngines(unittest.TestCase):
 
         table = Table(wiki_table_to_plain(wiki))
         engine.process(table, throw=False)
+
+    def test_compare(self):
+
+        engine = Engine()
+        cell = Cell('1')
+        engine.compare(cell, 1)
+        #print cell.__dict__

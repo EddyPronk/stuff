@@ -105,6 +105,7 @@ class TestRowFixture3(unittest.TestCase):
         '''
 
         fixture = self.process(wiki)
-        self.assertEqual(fixture.differ.missing, [['1'], ['2']])
-        self.assertEqual(fixture.differ.surplus, [[1], [2]])
-        #self.assertEqual(len(self.table.rows), 4)
+
+        self.assertEqual(fixture.differ.missing, [])
+        self.assertEqual(fixture.differ.surplus, [])
+        self.assertEqual(len(self.table.rows), 4)

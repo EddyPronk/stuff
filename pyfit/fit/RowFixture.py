@@ -24,8 +24,8 @@ class RowFixture(object):
         expected_values = table.rows[2:]
 
         def compare_row(expected_values,calculated):
-            for expected_value, actual_value in zip(expected_values, calculated):
-                self.engine.compare(expected_value, actual_value)
+            for expected_value, calculated_value in zip(expected_values, calculated):
+                self.engine.compare(expected_value, calculated_value)
 
         self.differ = Differ(compare_row)
         self.differ.match(expected_values, computed, 0)

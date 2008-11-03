@@ -9,7 +9,7 @@ class Differ(object):
             self.check(expected, computed)
         else:
             self.keyMap = {}
-            self.ePartition(expected, col, self.keyMap)
+            self.ePartition(expected, col, self.keyMap, computed[0])
             self.cPartition(computed, col, self.keyMap)
             for key, value in self.keyMap.items():
                 eList, cList = value
@@ -22,9 +22,10 @@ class Differ(object):
                 else:
                     self.match(eList, cList, col+1)
 
-    def ePartition(self, rows, col, map):
+    def ePartition(self, rows, col, map, desc):
         for row in rows:
-            key = str(row[0])
+            target_type = type(desc[col])
+            key = target_type(str(row[col]))
             self.insureKeyExists(map, key)
             map[key][0].append(row)
 
