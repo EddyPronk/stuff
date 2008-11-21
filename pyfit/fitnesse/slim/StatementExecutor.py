@@ -73,7 +73,6 @@ class StatementExecutor(object):
             self.instances[instanceName] = instance
             return "OK";
         except Exception, e:
-            print e
             return self.exceptionToString(
                 SlimError(
                     'message:<<COULD_NOT_INVOKE_CONSTRUCTOR %s[%d]>>' % (className, len(args))))
