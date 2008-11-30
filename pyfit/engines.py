@@ -12,7 +12,7 @@ class DefaultLoader(object):
         for name in names:
             module = getattr(module, name)
         class_ = getattr(module, name)
-        return class_()
+        return class_ # ()
 
     def do_load(self, name):
         return __import__(name)
@@ -95,6 +95,7 @@ class Engine(object):
         else:
             expected = type(actual_value)(expected_value)
 
+        print 'compare %s with %s' % (expected_value, actual_value)
         if expected == actual_value:
             cell.passed()
             self.summary.right += 1

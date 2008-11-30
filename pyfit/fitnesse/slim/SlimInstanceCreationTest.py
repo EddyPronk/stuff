@@ -1,30 +1,21 @@
 import unittest
 from StatementExecutor import StatementExecutor
-from fitnesse.slim.test.TestSlim import TestSlim
+from test.TestSlim import TestSlim
 import SlimServer
 
-'''package fitnesse.slim;
-
-import fitnesse.slim.test.TestSlim;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import org.junit.Before;
-import org.junit.Test;
-
-'''
 class SlimInstanceCreationTest(unittest.TestCase):
 
     def setUp(self):
         self.caller = StatementExecutor()
 
     def testCanCreateInstance(self):
-        response = self.caller.create("x", "fitnesse.slim.test.TestSlim", []);
+        response = self.caller.create("x", "test.TestSlim", []);
         self.assertEquals("OK", response);
         x = self.caller.getInstance("x");
         self.assertEquals(type(x), TestSlim)
 
     def testCanCreateInstanceWithArguments(self):
-        response = self.caller.create("x", "fitnesse.slim.test.TestSlim", [3]);
+        response = self.caller.create("x", "test.TestSlim", [3]);
         self.assertEquals("OK", response);
         x = self.caller.getInstance("x");
         self.assertEquals(x.constructorArg, 3)

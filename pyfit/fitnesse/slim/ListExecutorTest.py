@@ -1,25 +1,7 @@
 import unittest
 from ListExecutor import ListExecutor
 from SlimError import SlimError
-
-'''
-package fitnesse.slim;
-
-import fitnesse.slim.converters.VoidConverter;
-import static fitnesse.util.ListUtility.list;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-
-'''
 import sys
-
 
 EXCEPTION_TAG = '__EXCEPTION__:'
 
@@ -127,7 +109,7 @@ class ListExecutorTest(unittest.TestCase):
 
     def testCallToFunctionReturningNull(self):
         self.statements.append(["id", "call", "testSlim", "nullString"])
-        self.respondsWith([["id", None]])
+        self.respondsWith([["id", "None"]])
 
 if __name__ == '__main__':
     import sys

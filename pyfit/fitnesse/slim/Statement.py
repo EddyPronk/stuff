@@ -63,6 +63,7 @@ class Statement(object):
         return [ self.getWord(0), retval ]
 
     def addPath(self, caller):
+        print 'addpath ' + self.getWord(2)
         return caller.addPath(self.getWord(2))
 
     def createInstance(self, caller):

@@ -2,7 +2,7 @@ import unittest
 from plaintypes import Cell
 from differ import Differ
 
-def compare(e,c): pass
+#def compare(e,c): pass
 
 class TestDiffer(unittest.TestCase):
 
@@ -13,23 +13,26 @@ class TestDiffer(unittest.TestCase):
         expected = [[Cell('anna'), Cell('shrek')],
                     [Cell('luke'), Cell('lotr')]]
         
-        def compare(expected,calculated):
-            for e,c in zip(expected, calculated):
-                if str(e) != c:
-                    e.failed(c)
-
-        differ = Differ(compare)
+        cell = expected[0][1]
+        print cell.__dict__
+        desc = [str ,str]
+        print desc
+        #differ = Differ(compare, desc)
+        differ = Differ(compare, desc)
         differ.match(expected, computed, 0)
         cell = expected[0][1]
+        print 'missing : %s' % differ.missing
+        print 'surplus : %s' % differ.surplus
         self.assertEqual(cell.expected, 'shrek')
         self.assertEqual(cell.actual,   'lotr')
+        print cell.__dict__
 
     def test_one_missing_row(self):
         computed = [['anna', 'lotr']]
         expected = [['anna', 'shrek'],
                     ['luke', 'lotr']]
         
-        differ = Differ(compare)
+        differ = Differ(compare, [ str, str ])
         differ.match(expected, computed, 0)
         self.assertEqual(differ.missing, [['luke', 'lotr']])
         self.assertEqual(differ.surplus, [])
@@ -39,7 +42,7 @@ class TestDiffer(unittest.TestCase):
                     ['luke', 'lotr']]
         expected = [['anna', 'shrek']]
         
-        differ = Differ(compare)
+        differ = Differ(compare, [str,str])
         differ.match(expected, computed, 0)
         self.assertEqual(differ.missing, [])
         self.assertEqual(differ.surplus, [['luke', 'lotr']])

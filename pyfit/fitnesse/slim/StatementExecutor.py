@@ -7,20 +7,6 @@ import re
 EXCEPTION_TAG = '__EXCEPTION__:'
 
 '''
-package fitnesse.slim;
-
-import fitnesse.slim.converters.*;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-'''
-
-'''
  This is the API for executing a SLIM statement.  This class should not know about
  the syntax of a SLIM statement.
 '''
@@ -113,7 +99,7 @@ class StatementExecutor(object):
   }
 '''
 
-    def call(self, instanceName, methodName, args):
+    def call(self, instanceName, methodName, args = []):
         try:
             instance = self.getInstance(instanceName)
             return self.tryToInvokeMethod(instance, methodName, self.replaceVariables(args))
@@ -156,8 +142,19 @@ class StatementExecutor(object):
         return arg
 
     def tryToInvokeMethod(self, instance, methodName, args):
-        method =  getattr(instance, methodName)
-        return method(*args)
+        method =  self.findMatchingMethod(instance, methodName, type(instance), len(args))
+        retval = method(*args)
+        if type(retval) is list:
+            return retval
+        return str(retval)
+
+    def findMatchingMethod(self, instance, methodName, k, nArgs):
+        try:
+            method = getattr(instance, methodName)
+        except AttributeError, e:
+            raise SlimError('message:<<NO_METHOD_IN_CLASS %s[%d] %s.>>' % (methodName, nArgs, k.__module__))
+        return method
+        #except
 
 '''
   private Method findMatchingMethod(String methodName, Class<? extends Object> k, int nArgs) {

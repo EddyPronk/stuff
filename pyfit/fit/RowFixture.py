@@ -23,11 +23,20 @@ class RowFixture(object):
         computed = self.collect()
         expected_values = table.rows[2:]
 
-        def compare_row(expected_values,calculated):
+        def compare_row2(expected_values,calculated):
+            print 'compare_row'
             for expected_value, calculated_value in zip(expected_values, calculated):
                 self.engine.compare(expected_value, calculated_value)
 
-        self.differ = Differ(compare_row)
+        if len(computed):
+            desc = []
+            for cell in computed[0]:
+                desc.append(type(cell))
+        else:
+            desc = []
+            for cell in table.rows[1]:
+                desc.append(str)
+        self.differ = Differ(compare_row2, desc)
         self.differ.match(expected_values, computed, 0)
         for row in self.differ.missing:
             row[0].missing()
